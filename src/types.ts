@@ -53,7 +53,9 @@ export interface AISettings {
     provider: AIProviderType
     apiKeys: Partial<Record<AIProviderType, string>>
     models: Partial<Record<AIProviderType, string>>
+    maxTokens: number
     defaultLanguage: string
+    defaultTemplate: TemplateType  // 빠른 분석용 기본 템플릿
     autoTags: boolean
     notesFolder: string
     noteTemplate: string  // 노트 템플릿 (변수: {{title}}, {{source}}, {{date}}, {{template}}, {{provider}}, {{content}}, {{original}})
@@ -141,6 +143,7 @@ source: "{{source}}"
 created: {{date}}
 template: {{template}}
 {{#provider}}provider: {{provider}}{{/provider}}
+{{#model}}model: {{model}}{{/model}}
 tags: [stargate/clipping]
 ---
 
@@ -178,7 +181,9 @@ export const DEFAULT_AI_SETTINGS: AISettings = {
         zai: 'glm-4-flash',
         ollama: 'llama3.2'
     },
+    maxTokens: 64000,
     defaultLanguage: 'ko',
+    defaultTemplate: 'basic-summary',
     autoTags: true,
     notesFolder: 'Clippings',
     noteTemplate: DEFAULT_NOTE_TEMPLATE

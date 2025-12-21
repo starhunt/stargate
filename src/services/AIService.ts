@@ -63,6 +63,8 @@ export class AIService {
         }
 
         try {
+            console.log(`[Stargate] API Call - Provider: ${activeProvider}, Model: ${model}, URL: ${baseUrl}`)
+
             switch (activeProvider) {
                 case 'openai':
                     return await this.callOpenAI(messages, apiKey!, model, baseUrl)

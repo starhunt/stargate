@@ -18,6 +18,7 @@ interface AnalysisModalOptions {
     selectedText?: string
     url: string
     title: string
+    quickMode?: boolean  // true면 바로 분석 실행 및 저장
 }
 
 type SelectedTemplateType = TemplateType | 'raw-save' | string  // string for user-defined template IDs
@@ -37,7 +38,7 @@ export class AnalysisModal extends Modal {
     private editableContent: string = ''
 
     // 옵션
-    private includeOriginal: boolean = false
+    private includeOriginal: boolean = true
     private activePromptTab: PromptTabType = 'template'
     private insertLocation: InsertLocationType = 'new-note'
     private autoExtractTitle: boolean = true
@@ -52,6 +53,7 @@ export class AnalysisModal extends Modal {
     private templatePromptDisplayEl: HTMLElement | null = null
     private promptTabsContainer: HTMLElement | null = null
     private titleInputEl: HTMLInputElement | null = null
+    private analyzeBtn: HTMLButtonElement | null = null
 
     constructor(app: App, plugin: StargatePlugin, options: AnalysisModalOptions) {
         super(app)
@@ -59,8 +61,10 @@ export class AnalysisModal extends Modal {
         this.options = options
         this.aiService = new AIService(plugin.settings.ai)
         this.selectedProvider = plugin.settings.ai.provider
-        // 제목은 나중에 콘텐츠에서 자동 추출
-        this.editableTitle = options.title || ''
+        // 기본 템플릿 선택
+        this.selectedTemplateId = plugin.settings.ai.defaultTemplate
+        // 제목은 autoExtractTitle이 false일 때만 options.title 사용
+        this.editableTitle = ''
     }
 
     async onOpen() {
@@ -86,9 +90,28 @@ export class AnalysisModal extends Modal {
 
         this.updateActiveContent()
 
-        // 제목 자동 추출
-        if (!this.editableTitle) {
+        // 제목 설정: 자동추출 모드면 콘텐츠에서 추출, 아니면 options.title 사용
+        if (this.autoExtractTitle) {
             this.editableTitle = this.extractTitleFromContent(this.editableContent)
+        } else {
+            this.editableTitle = this.options.title || ''
+        }
+
+        // 빠른 분석 모드: UI 없이 바로 실행
+        if (this.options.quickMode) {
+            this.selectedTemplateId = this.plugin.settings.ai.defaultTemplate
+            contentEl.createEl('h2', { text: 'Quick Analysis' })
+            const statusEl = contentEl.createDiv({ cls: 'stargate-quick-status' })
+            statusEl.innerHTML = '<span class="stargate-spinner"></span><span>분석 중...</span>'
+            statusEl.style.display = 'flex'
+            statusEl.style.alignItems = 'center'
+            statusEl.style.gap = '12px'
+            statusEl.style.padding = '20px'
+            statusEl.style.justifyContent = 'center'
+
+            // 바로 분석 실행
+            await this.runQuickAnalysis()
+            return
         }
 
         // 제목
@@ -134,14 +157,14 @@ export class AnalysisModal extends Modal {
         // 버튼
         const buttonContainer = contentEl.createDiv({ cls: 'stargate-modal-buttons' })
 
-        const cancelBtn = buttonContainer.createEl('button', { text: 'Cancel' })
+        const cancelBtn = buttonContainer.createEl('button', { text: '취소' })
         cancelBtn.onclick = () => this.close()
 
-        const analyzeBtn = buttonContainer.createEl('button', {
-            text: 'Analyze',
-            cls: 'mod-cta'
+        this.analyzeBtn = buttonContainer.createEl('button', {
+            cls: 'mod-cta stargate-analyze-btn'
         })
-        analyzeBtn.onclick = () => this.runAnalysis()
+        this.analyzeBtn.innerHTML = '<span class="stargate-btn-text">생성</span>'
+        this.analyzeBtn.onclick = () => this.runAnalysis()
     }
 
     /**
@@ -203,27 +226,48 @@ export class AnalysisModal extends Modal {
             return 'Untitled'
         }
 
+        // 1. 메타데이터에서 제목 찾기 (예: **제목**: xxx, - **제목**: xxx, 제목: xxx)
+        const titlePatterns = [
+            /\*\*제목\*\*[:\s]+(.+)/i,
+            /\*\*title\*\*[:\s]+(.+)/i,
+            /^-?\s*제목[:\s]+(.+)/im,
+            /^-?\s*title[:\s]+(.+)/im,
+        ]
+        for (const pattern of titlePatterns) {
+            const match = content.match(pattern)
+            if (match && match[1]) {
+                return match[1].trim().substring(0, 100)
+            }
+        }
+
         const lines = content.trim().split('\n')
 
-        // 1. 첫 번째 줄이 마크다운 헤딩이면 사용
+        // 2. 첫 번째 줄이 마크다운 헤딩이면 사용
         const headingMatch = lines[0].match(/^#{1,6}\s+(.+)/)
         if (headingMatch) {
             return headingMatch[1].trim().substring(0, 100)
         }
 
-        // 2. 첫 번째 줄이 짧으면 (100자 이하) 제목으로 사용
-        const firstLine = lines[0].trim()
-        if (firstLine.length <= 100 && firstLine.length > 0) {
-            return firstLine
+        // 3. 첫 번째 비어있지 않은 줄이 짧으면 (100자 이하) 제목으로 사용
+        for (const line of lines) {
+            const trimmed = line.trim()
+            if (trimmed.length > 0 && trimmed.length <= 100) {
+                // 구분선이나 메타데이터 마커는 건너뛰기
+                if (trimmed.match(/^[-=_*]{3,}$/) || trimmed.startsWith('📋') || trimmed.startsWith('---')) {
+                    continue
+                }
+                return trimmed
+            }
+            if (trimmed.length > 0) break
         }
 
-        // 3. 첫 번째 문장 추출 (마침표, 물음표, 느낌표로 끝나는 부분)
+        // 4. 첫 번째 문장 추출 (마침표, 물음표, 느낌표로 끝나는 부분)
         const sentenceMatch = content.match(/^[^.!?]+[.!?]/)
         if (sentenceMatch && sentenceMatch[0].length <= 100) {
             return sentenceMatch[0].trim()
         }
 
-        // 4. 처음 50자 + "..."
+        // 5. 처음 50자 + "..."
         return content.trim().substring(0, 50) + '...'
     }
 
@@ -273,9 +317,9 @@ export class AnalysisModal extends Modal {
 
         // 삽입 위치 선택
         const insertEl = rowEl.createDiv({ cls: 'stargate-insert-location' })
-        insertEl.createEl('span', { text: 'Insert:', cls: 'stargate-source-label' })
+        insertEl.createEl('span', { text: 'Insert:', cls: 'stargate-insert-label' })
 
-        const insertButtonsEl = insertEl.createDiv({ cls: 'stargate-source-buttons' })
+        const insertButtonsEl = insertEl.createDiv({ cls: 'stargate-insert-buttons' })
 
         const locations: { key: InsertLocationType; label: string }[] = [
             { key: 'new-note', label: '새 노트' },
@@ -286,12 +330,12 @@ export class AnalysisModal extends Modal {
         for (const loc of locations) {
             const btn = insertButtonsEl.createEl('button', {
                 text: loc.label,
-                cls: `stargate-source-btn ${this.insertLocation === loc.key ? 'active' : ''}`
+                cls: `stargate-insert-btn ${this.insertLocation === loc.key ? 'active' : ''}`
             })
 
             btn.onclick = () => {
                 this.insertLocation = loc.key
-                insertButtonsEl.querySelectorAll('.stargate-source-btn').forEach((b) => b.removeClass('active'))
+                insertButtonsEl.querySelectorAll('.stargate-insert-btn').forEach((b) => b.removeClass('active'))
                 btn.addClass('active')
             }
         }
@@ -709,8 +753,11 @@ export class AnalysisModal extends Modal {
         if (this.isAnalyzing) return
         this.isAnalyzing = true
 
-        const loadingEl = this.contentEl.createDiv({ cls: 'stargate-loading' })
-        loadingEl.createEl('span', { text: 'Analyzing...' })
+        // 버튼 상태 변경
+        if (this.analyzeBtn) {
+            this.analyzeBtn.disabled = true
+            this.analyzeBtn.innerHTML = '<span class="stargate-spinner"></span><span class="stargate-btn-text">생성중...</span>'
+        }
 
         try {
             let messages: AIMessage[]
@@ -765,7 +812,11 @@ export class AnalysisModal extends Modal {
         } catch (error) {
             new Notice(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
         } finally {
-            loadingEl.remove()
+            // 버튼 상태 복원
+            if (this.analyzeBtn) {
+                this.analyzeBtn.disabled = false
+                this.analyzeBtn.innerHTML = '<span class="stargate-btn-text">생성</span>'
+            }
             this.isAnalyzing = false
         }
     }
@@ -774,11 +825,16 @@ export class AnalysisModal extends Modal {
      * 미리보기 모달 표시
      */
     private showPreviewModal(content: string, isRaw: boolean): void {
+        const model = this.plugin.settings.ai.models[this.selectedProvider] ||
+            AI_PROVIDERS[this.selectedProvider].defaultModel
+
         new PreviewModal(this.app, {
             content,
             isRaw,
+            provider: isRaw ? undefined : AI_PROVIDERS[this.selectedProvider].name,
+            model: isRaw ? undefined : model,
             onApply: async () => {
-                await this.createNote(content, isRaw)
+                await this.createNote(content, isRaw, model)
                 new Notice(isRaw ? 'Content saved!' : 'Analysis complete! Note created.')
                 this.close()
             },
@@ -797,7 +853,7 @@ export class AnalysisModal extends Modal {
     /**
      * 분석 결과를 노트로 저장
      */
-    private async createNote(content: string, isRaw: boolean): Promise<void> {
+    private async createNote(content: string, isRaw: boolean, model?: string): Promise<void> {
         const { vault, workspace } = this.app
 
         let templateName: string
@@ -827,7 +883,8 @@ export class AnalysisModal extends Modal {
             source: this.options.url,
             date: new Date().toISOString(),
             template: templateName,
-            provider: isRaw ? '' : this.selectedProvider,
+            provider: isRaw ? '' : AI_PROVIDERS[this.selectedProvider].name,
+            model: isRaw ? '' : (model || ''),
             content: content,
             original: this.includeOriginal && !isRaw ? this.editableContent : ''
         }
@@ -968,6 +1025,57 @@ export class AnalysisModal extends Modal {
         return result
     }
 
+    /**
+     * 빠른 분석 실행 (미리보기 없이 바로 저장)
+     */
+    private async runQuickAnalysis(): Promise<void> {
+        if (!this.editableContent.trim()) {
+            new Notice('No content to analyze')
+            this.close()
+            return
+        }
+
+        if (!this.aiService.isProviderConfigured(this.selectedProvider)) {
+            new Notice(`Please configure API key for ${AI_PROVIDERS[this.selectedProvider].name} in settings`)
+            this.close()
+            return
+        }
+
+        try {
+            // 기본 템플릿 사용
+            const template = getEffectiveTemplate(
+                this.selectedTemplateId as TemplateType,
+                this.plugin.settings.customTemplates
+            )
+            if (!template) {
+                throw new Error('Template not found')
+            }
+
+            const userPrompt = renderPrompt(template, this.editableContent)
+            const messages: AIMessage[] = [
+                { role: 'system', content: template.systemPrompt },
+                { role: 'user', content: userPrompt }
+            ]
+
+            const response = await this.aiService.sendRequest(messages, this.selectedProvider)
+
+            if (response.error) {
+                throw new Error(response.error)
+            }
+
+            // 바로 노트 생성
+            const model = this.plugin.settings.ai.models[this.selectedProvider] ||
+                AI_PROVIDERS[this.selectedProvider].defaultModel
+            await this.createNote(response.content, false, model)
+
+            new Notice('Quick analysis complete! Note created.')
+            this.close()
+        } catch (error) {
+            new Notice(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+            this.close()
+        }
+    }
+
     onClose() {
         const { contentEl } = this
         contentEl.empty()
@@ -980,6 +1088,8 @@ export class AnalysisModal extends Modal {
 interface PreviewModalOptions {
     content: string
     isRaw: boolean
+    provider?: string
+    model?: string
     onApply: () => void
     onRegenerate: () => void
     onCancel: () => void
@@ -994,38 +1104,85 @@ class PreviewModal extends Modal {
     }
 
     onOpen() {
-        const { contentEl } = this
+        const { contentEl, modalEl } = this
         contentEl.empty()
-        contentEl.addClass('stargate-preview-modal')
 
-        contentEl.createEl('h2', { text: this.options.isRaw ? 'Content Preview' : 'Analysis Result' })
+        // 모달 전체 크기 설정
+        modalEl.addClass('stargate-result-modal')
 
-        // 미리보기 영역
-        const previewEl = contentEl.createDiv({ cls: 'stargate-preview-content' })
-        previewEl.createEl('pre', {
-            text: this.options.content,
-            cls: 'stargate-preview-text'
+        // 제목
+        const titleEl = contentEl.createEl('h2', {
+            text: this.options.isRaw ? 'Content Preview' : 'Analysis Result'
         })
+        titleEl.style.marginBottom = '12px'
 
-        // 버튼
-        const buttonContainer = contentEl.createDiv({ cls: 'stargate-modal-buttons' })
+        // Provider/Model 정보 표시 (AI 분석일 때만)
+        if (!this.options.isRaw && (this.options.provider || this.options.model)) {
+            const infoEl = contentEl.createDiv()
+            infoEl.style.display = 'flex'
+            infoEl.style.gap = '16px'
+            infoEl.style.marginBottom = '12px'
+            infoEl.style.fontSize = '12px'
+            infoEl.style.color = 'var(--text-muted)'
 
-        const cancelBtn = buttonContainer.createEl('button', { text: 'Cancel' })
+            if (this.options.provider) {
+                const providerEl = infoEl.createSpan()
+                providerEl.innerHTML = `<strong>Provider:</strong> ${this.options.provider}`
+            }
+            if (this.options.model) {
+                const modelEl = infoEl.createSpan()
+                modelEl.innerHTML = `<strong>Model:</strong> ${this.options.model}`
+            }
+        }
+
+        // 스크롤 가능한 콘텐츠 영역
+        const scrollContainer = contentEl.createDiv()
+        scrollContainer.style.height = 'calc(70vh - 100px)'
+        scrollContainer.style.maxHeight = '500px'
+        scrollContainer.style.overflowY = 'auto'
+        scrollContainer.style.overflowX = 'hidden'
+        scrollContainer.style.padding = '16px'
+        scrollContainer.style.background = 'var(--background-secondary)'
+        scrollContainer.style.borderRadius = '8px'
+        scrollContainer.style.border = '1px solid var(--background-modifier-border)'
+
+        // 콘텐츠 (pre 태그)
+        const preEl = scrollContainer.createEl('pre')
+        preEl.style.margin = '0'
+        preEl.style.whiteSpace = 'pre-wrap'
+        preEl.style.wordBreak = 'break-word'
+        preEl.style.fontFamily = 'inherit'
+        preEl.style.fontSize = '13px'
+        preEl.style.lineHeight = '1.6'
+        preEl.style.color = 'var(--text-normal)'
+        preEl.textContent = this.options.content
+
+        // 버튼 컨테이너
+        const buttonContainer = contentEl.createDiv()
+        buttonContainer.style.display = 'flex'
+        buttonContainer.style.justifyContent = 'flex-end'
+        buttonContainer.style.gap = '8px'
+        buttonContainer.style.marginTop = '20px'
+
+        // 취소 버튼
+        const cancelBtn = buttonContainer.createEl('button', { text: '취소' })
         cancelBtn.onclick = () => {
             this.options.onCancel()
             this.close()
         }
 
+        // 재생성 버튼 (AI 분석 결과일 때만)
         if (!this.options.isRaw) {
-            const regenerateBtn = buttonContainer.createEl('button', { text: 'Regenerate' })
+            const regenerateBtn = buttonContainer.createEl('button', { text: '재생성' })
             regenerateBtn.onclick = () => {
                 this.close()
                 this.options.onRegenerate()
             }
         }
 
+        // 적용 버튼
         const applyBtn = buttonContainer.createEl('button', {
-            text: 'Apply',
+            text: '적용',
             cls: 'mod-cta'
         })
         applyBtn.onclick = () => {

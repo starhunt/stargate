@@ -149,11 +149,13 @@ export class StargateSettingTab extends PluginSettingTab {
                 })
             })
 
-        // API Keys
+        // Provider별 API Key 및 Model 설정
         for (const [providerId, providerConfig] of Object.entries(AI_PROVIDERS)) {
             const currentKey = this.plugin.settings.ai.apiKeys[providerId as AIProviderType] || ''
+            const currentModel = this.plugin.settings.ai.models[providerId as AIProviderType] || providerConfig.defaultModel
             const hasKey = currentKey.length > 0
 
+            // API Key
             new Setting(containerEl)
                 .setName(`${providerConfig.name} API Key`)
                 .setDesc(hasKey ? '✓ API key configured' : 'Enter your API key')
@@ -167,7 +169,39 @@ export class StargateSettingTab extends PluginSettingTab {
                         })
                     text.inputEl.type = 'password'
                 })
+
+            // Model Name
+            new Setting(containerEl)
+                .setName(`${providerConfig.name} Model`)
+                .setDesc(`Model to use (default: ${providerConfig.defaultModel})`)
+                .addText((text) => {
+                    text
+                        .setPlaceholder(providerConfig.defaultModel)
+                        .setValue(currentModel)
+                        .onChange(async (value) => {
+                            this.plugin.settings.ai.models[providerId as AIProviderType] = value || providerConfig.defaultModel
+                            await this.plugin.saveSettings()
+                        })
+                })
         }
+
+        // Max Tokens
+        new Setting(containerEl)
+            .setName('Max Tokens')
+            .setDesc('Maximum tokens for AI response (default: 64000)')
+            .addText((text) => {
+                text
+                    .setPlaceholder('64000')
+                    .setValue(String(this.plugin.settings.ai.maxTokens || 64000))
+                    .onChange(async (value) => {
+                        const numValue = parseInt(value, 10)
+                        this.plugin.settings.ai.maxTokens = isNaN(numValue) ? 64000 : numValue
+                        await this.plugin.saveSettings()
+                    })
+                text.inputEl.type = 'number'
+                text.inputEl.min = '1000'
+                text.inputEl.max = '200000'
+            })
 
         // Default Language
         new Setting(containerEl)
@@ -181,6 +215,21 @@ export class StargateSettingTab extends PluginSettingTab {
                 dropdown.setValue(this.plugin.settings.ai.defaultLanguage)
                 dropdown.onChange(async (value) => {
                     this.plugin.settings.ai.defaultLanguage = value
+                    await this.plugin.saveSettings()
+                })
+            })
+
+        // Default Template (for Quick Analysis)
+        new Setting(containerEl)
+            .setName('Default Template')
+            .setDesc('Template to use for Quick Analysis shortcut')
+            .addDropdown((dropdown) => {
+                for (const template of ANALYSIS_TEMPLATES) {
+                    dropdown.addOption(template.id, `${template.icon} ${template.name}`)
+                }
+                dropdown.setValue(this.plugin.settings.ai.defaultTemplate)
+                dropdown.onChange(async (value) => {
+                    this.plugin.settings.ai.defaultTemplate = value as TemplateType
                     await this.plugin.saveSettings()
                 })
             })

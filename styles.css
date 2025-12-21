@@ -285,16 +285,22 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 12px;
+}
+
+/* Remove margin when inside row */
+.stargate-source-insert-row .stargate-content-source {
+    margin-bottom: 0;
 }
 
 .stargate-source-label {
     font-size: 13px;
     color: var(--text-muted);
+    line-height: 1;
 }
 
 .stargate-source-buttons {
     display: flex;
+    align-items: center;
     gap: 6px;
 }
 
@@ -746,6 +752,34 @@
     padding: 8px 16px;
 }
 
+/* Analyze Button */
+.stargate-analyze-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stargate-btn-text {
+    display: inline;
+}
+
+/* Spinner */
+.stargate-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: stargate-spin 0.8s linear infinite;
+}
+
+@keyframes stargate-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .stargate-textarea-container {
     margin-top: 8px;
 }
@@ -946,19 +980,16 @@
 }
 
 /* ============================================
-   Preview Modal
+   Result Modal (Analysis Result / Content Preview)
    ============================================ */
 
-.stargate-preview-modal {
-    max-width: 800px;
-    width: 90vw;
+.stargate-result-modal {
+    width: 800px !important;
+    max-width: 90vw !important;
 }
 
-.stargate-preview-modal .modal-content {
-    padding: 20px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
+.stargate-result-modal .modal-content {
+    padding: 24px;
 }
 
 .stargate-preview-header {
@@ -982,26 +1013,23 @@
 }
 
 .stargate-preview-content {
-    min-height: 300px;
-    max-height: 60vh;
-    overflow-y: auto !important;
-    overflow-x: hidden;
     padding: 16px;
     background: var(--background-secondary);
     border-radius: 8px;
     border: 1px solid var(--background-modifier-border);
     font-size: 13px;
     line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
-    flex: 1;
 }
 
-.stargate-preview-content pre {
+.stargate-preview-content pre,
+.stargate-preview-text {
     margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
     font-family: inherit;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-normal);
 }
 
 .stargate-preview-actions {
@@ -1139,9 +1167,10 @@
 .stargate-source-insert-row {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 32px;
     margin-bottom: 12px;
     flex-wrap: wrap;
+    line-height: 1;
 }
 
 /* Insert Location Selector */
@@ -1149,6 +1178,41 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    line-height: 1;
+}
+
+.stargate-insert-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.stargate-insert-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stargate-insert-btn {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    background: var(--background-modifier-hover);
+    border: 1px solid #a855f7;
+    color: var(--text-normal);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.stargate-insert-btn:hover {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: #a855f7;
+}
+
+.stargate-insert-btn.active {
+    background: #a855f7;
+    border-color: #a855f7;
+    color: white;
 }
 
 /* User-defined Template Button */

@@ -4,6 +4,9 @@ import { PLUGIN_ID, VIEW_TYPE_BROWSER, MAX_PINNED_SITES, DEFAULT_PROFILE_KEY } f
 import { BrowserView } from './views/BrowserView'
 import { StargateSettingTab } from './SettingTab'
 
+// Type export for commands
+export type { BrowserView }
+
 export default class StargatePlugin extends Plugin {
     settings: PluginSettings = DEFAULT_SETTINGS
 
@@ -35,6 +38,68 @@ export default class StargatePlugin extends Plugin {
             name: 'Open Browser in New Tab',
             callback: () => this.activateBrowserView(true)
         })
+
+        this.addCommand({
+            id: 'open-ai-analysis',
+            name: 'Open AI Analysis',
+            callback: () => this.openAIAnalysis()
+        })
+
+        this.addCommand({
+            id: 'quick-save',
+            name: 'Quick Save (Raw Content)',
+            callback: () => this.runQuickSave()
+        })
+    }
+
+    /**
+     * AI 분석 모달 열기
+     */
+    private async openAIAnalysis(): Promise<void> {
+        const view = this.getBrowserView()
+        if (view) {
+            await view.openAnalysisModal()
+        } else {
+            // 브라우저 뷰가 없으면 먼저 열기
+            await this.activateBrowserView()
+            // 약간의 딜레이 후 다시 시도
+            setTimeout(async () => {
+                const view = this.getBrowserView()
+                if (view) {
+                    await view.openAnalysisModal()
+                }
+            }, 300)
+        }
+    }
+
+    /**
+     * 빠른 저장 실행
+     */
+    private async runQuickSave(): Promise<void> {
+        const view = this.getBrowserView()
+        if (view) {
+            await view.quickSave()
+        } else {
+            // 브라우저 뷰가 없으면 먼저 열기
+            await this.activateBrowserView()
+            setTimeout(async () => {
+                const view = this.getBrowserView()
+                if (view) {
+                    await view.quickSave()
+                }
+            }, 300)
+        }
+    }
+
+    /**
+     * BrowserView 인스턴스 가져오기
+     */
+    private getBrowserView(): BrowserView | null {
+        const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_BROWSER)
+        if (leaves.length > 0) {
+            return leaves[0].view as BrowserView
+        }
+        return null
     }
 
     onunload() {
@@ -77,10 +142,19 @@ export default class StargatePlugin extends Plugin {
             ...loadedData
         }
 
-        // AI 설정 병합
+        // AI 설정 병합 (중첩 객체 포함)
         this.settings.ai = {
             ...DEFAULT_AI_SETTINGS,
-            ...(loadedData?.ai || {})
+            ...(loadedData?.ai || {}),
+            // apiKeys와 models는 별도로 깊은 병합
+            apiKeys: {
+                ...DEFAULT_AI_SETTINGS.apiKeys,
+                ...(loadedData?.ai?.apiKeys || {})
+            },
+            models: {
+                ...DEFAULT_AI_SETTINGS.models,
+                ...(loadedData?.ai?.models || {})
+            }
         }
 
         // UUID 생성 (최초 실행 시)
