@@ -1,0 +1,1224 @@
+/* ============================================
+   Stargate Plugin Styles
+   ============================================ */
+
+/* ============================================
+   Browser View
+   ============================================ */
+
+.stargate-browser-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ============================================
+   Top Bar
+   ============================================ */
+
+.stargate-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+    min-height: 36px;
+    gap: 8px;
+}
+
+/* ============================================
+   Tab Bar
+   ============================================ */
+
+.stargate-tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.stargate-tab-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.stargate-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    background: var(--background-primary);
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.stargate-tab:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--background-modifier-border);
+}
+
+.stargate-tab.active {
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+}
+
+.stargate-tab.active .stargate-tab-favicon {
+    filter: brightness(1.2);
+}
+
+/* Favicon */
+.stargate-tab-favicon {
+    width: 18px;
+    height: 18px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stargate-tab-favicon svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.stargate-tab.active .stargate-tab-favicon svg {
+    color: var(--text-on-accent);
+}
+
+/* Close button */
+.stargate-tab-close {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--background-modifier-error);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.stargate-tab-close svg {
+    width: 10px;
+    height: 10px;
+    color: white;
+}
+
+.stargate-tab:hover .stargate-tab-close {
+    display: flex;
+}
+
+/* New tab button */
+.stargate-new-tab {
+    background: transparent;
+    border: 1px dashed var(--background-modifier-border);
+}
+
+.stargate-new-tab:hover {
+    background: var(--background-modifier-hover);
+    border-style: solid;
+}
+
+.stargate-new-tab svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Action Buttons
+   ============================================ */
+
+.stargate-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stargate-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.stargate-action-btn:hover {
+    background: var(--background-modifier-hover);
+}
+
+.stargate-action-btn svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.stargate-action-btn:hover svg {
+    color: var(--text-normal);
+}
+
+/* ============================================
+   Content Area
+   ============================================ */
+
+.stargate-content-area {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.stargate-content-area webview,
+.stargate-content-area iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.stargate-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.stargate-empty-state h3 {
+    margin-bottom: 8px;
+    color: var(--text-normal);
+}
+
+.stargate-empty-state p {
+    margin-bottom: 20px;
+}
+
+.stargate-empty-state button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.stargate-empty-state button:hover {
+    background: var(--interactive-accent-hover);
+}
+
+/* ============================================
+   Settings Tab
+   ============================================ */
+
+.pinned-sites-container,
+.saved-prompts-container {
+    margin-bottom: 16px;
+}
+
+/* ============================================
+   Analysis Modal
+   ============================================ */
+
+.stargate-analysis-modal {
+    max-width: 600px;
+}
+
+.stargate-analysis-modal h2 {
+    margin-bottom: 16px;
+}
+
+.stargate-analysis-modal h3 {
+    margin-top: 20px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.stargate-analysis-modal h4 {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Page Info */
+.stargate-page-info {
+    padding: 12px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.stargate-page-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.stargate-page-url {
+    font-size: 12px;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+/* Content Source Selector */
+.stargate-content-source {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.stargate-source-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.stargate-source-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.stargate-source-btn {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    background: var(--background-modifier-hover);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.stargate-source-btn:hover:not(.disabled) {
+    background: var(--background-modifier-border);
+}
+
+.stargate-source-btn.active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.stargate-source-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Content Preview */
+.stargate-content-preview {
+    padding: 12px;
+    background: var(--background-primary-alt);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.stargate-preview-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    max-height: 100px;
+    overflow: hidden;
+}
+
+.stargate-preview-count {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-top: 8px;
+    text-align: right;
+}
+
+.stargate-no-content {
+    color: var(--text-error);
+    padding: 12px;
+    background: var(--background-modifier-error-rgb);
+    border-radius: 8px;
+}
+
+/* Templates */
+.stargate-templates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.stargate-template-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.stargate-template-btn:hover {
+    border-color: var(--interactive-accent-hover);
+    background: var(--background-secondary);
+}
+
+.stargate-template-btn.selected {
+    border-color: var(--interactive-accent);
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.stargate-template-icon {
+    font-size: 16px;
+}
+
+.stargate-template-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Saved Prompt Buttons */
+.stargate-saved-prompts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.stargate-saved-prompt-btn {
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: var(--background-modifier-hover);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.stargate-saved-prompt-btn:hover {
+    background: var(--background-modifier-border);
+}
+
+/* Title Section */
+.stargate-title-section {
+    margin-bottom: 12px;
+}
+
+.stargate-title-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.stargate-auto-extract {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stargate-checkbox-small {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+.stargate-checkbox-label-small {
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.stargate-field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.stargate-title-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 14px;
+    font-weight: 600;
+    box-sizing: border-box;
+}
+
+.stargate-title-input.readonly {
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.stargate-title-input:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+.stargate-title-input.readonly:focus {
+    border-color: var(--background-modifier-border);
+}
+
+/* URL Display */
+.stargate-page-url-display {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    word-break: break-all;
+}
+
+.stargate-url-label {
+    color: var(--text-faint);
+}
+
+/* Content Editor */
+.stargate-content-editor {
+    margin-bottom: 16px;
+}
+
+.stargate-content-textarea {
+    width: 100%;
+    min-height: 80px;
+    max-height: 200px;
+    padding: 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.stargate-content-textarea:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+.stargate-char-count {
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: right;
+    margin-top: 4px;
+}
+
+/* Include Original Checkbox */
+.stargate-include-original {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0;
+    padding: 8px 12px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+}
+
+.stargate-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.stargate-checkbox-label {
+    font-size: 13px;
+    color: var(--text-normal);
+    cursor: pointer;
+}
+
+/* Custom Prompt Section */
+.stargate-custom-prompt-section {
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+
+.stargate-custom-prompt-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.stargate-custom-prompt-textarea {
+    width: 100%;
+    min-height: 32px;
+    padding: 8px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.stargate-custom-prompt-textarea:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+.stargate-custom-prompt-textarea::placeholder {
+    color: var(--text-faint);
+}
+
+/* Raw Save Button */
+.stargate-raw-save {
+    border-style: dashed !important;
+}
+
+/* Template Editor in Settings */
+.stargate-template-help {
+    margin-bottom: 12px;
+}
+
+.stargate-template-help ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.stargate-template-help li {
+    margin: 4px 0;
+}
+
+.stargate-template-help code {
+    background: var(--background-modifier-hover);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.stargate-template-editor {
+    width: 100%;
+    min-height: 300px;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-family: var(--font-monospace);
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+}
+
+.stargate-template-editor:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+/* Loading */
+.stargate-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: var(--text-muted);
+}
+
+.stargate-loading span {
+    animation: stargate-pulse 1.5s infinite;
+}
+
+@keyframes stargate-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Template Grid (legacy, keeping for reference) */
+.stargate-template-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.stargate-template-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.stargate-template-card:hover {
+    border-color: var(--interactive-accent-hover);
+    background: var(--background-secondary);
+}
+
+.stargate-template-card.selected {
+    border-color: var(--interactive-accent);
+    background: var(--background-secondary);
+}
+
+.stargate-template-card .icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.stargate-template-card .name {
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.stargate-template-card .description {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 2px;
+}
+
+/* Saved prompts chips */
+.stargate-saved-prompts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.stargate-prompt-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    background: var(--background-modifier-hover);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.stargate-prompt-chip:hover {
+    background: var(--background-modifier-border);
+}
+
+.stargate-prompt-chip.selected {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+/* ============================================
+   Modal Styles
+   ============================================ */
+
+.stargate-edit-site-modal,
+.stargate-edit-prompt-modal {
+    padding: 16px;
+}
+
+.stargate-modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.stargate-modal-buttons button {
+    padding: 8px 16px;
+}
+
+.stargate-textarea-container {
+    margin-top: 8px;
+}
+
+.stargate-prompt-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.stargate-prompt-textarea:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 400px) {
+    .stargate-template-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
+   Prompt Tabs UI
+   ============================================ */
+
+.stargate-prompt-tabs-container {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.stargate-prompt-tab-header {
+    display: flex;
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.stargate-prompt-tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.stargate-prompt-tab-btn:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.stargate-prompt-tab-btn.active {
+    color: var(--interactive-accent);
+    background: var(--background-primary);
+}
+
+.stargate-prompt-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--interactive-accent);
+}
+
+.stargate-prompt-tab-content {
+    padding: 16px;
+    background: var(--background-primary);
+}
+
+/* Tab content visibility */
+.stargate-prompt-tab {
+    display: none;
+}
+
+.stargate-prompt-tab.active {
+    display: block;
+}
+
+/* Prompt notice style */
+.stargate-prompt-notice {
+    padding: 8px 12px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-accent);
+    margin-bottom: 12px;
+    border-left: 3px solid var(--interactive-accent);
+}
+
+/* Saved prompts section in tab */
+.stargate-saved-prompts-section {
+    margin-bottom: 16px;
+}
+
+.stargate-saved-prompts-section .stargate-field-label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Template prompt display styles */
+.stargate-prompt-raw {
+    color: var(--text-faint);
+    font-style: italic;
+}
+
+.stargate-prompt-template-name {
+    font-weight: 600;
+    color: var(--text-normal);
+    margin-bottom: 8px;
+}
+
+.stargate-prompt-template-content {
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+/* Template Prompt Display (Read-only) */
+.stargate-template-prompt-display {
+    padding: 12px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.stargate-no-template-selected {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-faint);
+    font-style: italic;
+}
+
+/* Custom Prompt Tab */
+.stargate-custom-priority-notice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--background-modifier-info);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.stargate-custom-priority-notice svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-accent);
+    flex-shrink: 0;
+}
+
+.stargate-custom-prompt-input {
+    width: 100%;
+    min-height: 60px;
+    max-height: 120px;
+    padding: 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.stargate-custom-prompt-input:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+.stargate-custom-prompt-input::placeholder {
+    color: var(--text-faint);
+}
+
+/* ============================================
+   Preview Modal
+   ============================================ */
+
+.stargate-preview-modal {
+    max-width: 800px;
+    width: 90vw;
+}
+
+.stargate-preview-modal .modal-content {
+    padding: 20px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.stargate-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.stargate-preview-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.stargate-preview-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.stargate-preview-content {
+    min-height: 300px;
+    max-height: 60vh;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    padding: 16px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    flex: 1;
+}
+
+.stargate-preview-content pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+}
+
+.stargate-preview-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.stargate-preview-btn {
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.stargate-preview-btn-cancel {
+    background: var(--background-modifier-hover);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+}
+
+.stargate-preview-btn-cancel:hover {
+    background: var(--background-modifier-border);
+}
+
+.stargate-preview-btn-regenerate {
+    background: var(--background-secondary);
+    border: 1px solid var(--interactive-accent);
+    color: var(--interactive-accent);
+}
+
+.stargate-preview-btn-regenerate:hover {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.stargate-preview-btn-apply {
+    background: var(--interactive-accent);
+    border: 1px solid var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.stargate-preview-btn-apply:hover {
+    background: var(--interactive-accent-hover);
+    border-color: var(--interactive-accent-hover);
+}
+
+/* Loading state in preview */
+.stargate-preview-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.stargate-preview-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--background-modifier-border);
+    border-top-color: var(--interactive-accent);
+    border-radius: 50%;
+    animation: stargate-spin 1s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes stargate-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error state in preview */
+.stargate-preview-error {
+    padding: 20px;
+    background: rgba(var(--background-modifier-error-rgb), 0.1);
+    border: 1px solid var(--background-modifier-error);
+    border-radius: 8px;
+    color: var(--text-error);
+    text-align: center;
+}
+
+/* ============================================
+   Edit Template Modal
+   ============================================ */
+
+.stargate-edit-template-modal {
+    max-width: 700px;
+    width: 90vw;
+}
+
+.stargate-edit-template-modal h2 {
+    margin-bottom: 8px;
+}
+
+.stargate-template-section {
+    margin-bottom: 20px;
+}
+
+.stargate-template-section h3 {
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.stargate-template-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-family: var(--font-monospace);
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+    margin-top: 8px;
+}
+
+.stargate-template-textarea:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+/* Analysis Templates Container in Settings */
+.analysis-templates-container {
+    margin-bottom: 16px;
+}
+
+/* Source + Insert Row */
+.stargate-source-insert-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+/* Insert Location Selector */
+.stargate-insert-location {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* User-defined Template Button */
+.stargate-user-template {
+    border-color: var(--interactive-accent-hover) !important;
+    border-style: dashed !important;
+}
+
+.stargate-user-template.selected {
+    border-style: solid !important;
+}
+
+/* ============================================
+   Prompt Type Selector (EditPromptModal)
+   ============================================ */
+
+.stargate-prompt-type-section {
+    margin-bottom: 16px;
+}
+
+.stargate-type-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.stargate-type-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.stargate-type-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: 2px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.stargate-type-btn:hover {
+    border-color: var(--interactive-accent-hover);
+    background: var(--background-secondary);
+}
+
+.stargate-type-btn.active {
+    border-color: var(--interactive-accent);
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+/* Full Template Fields Container */
+.stargate-full-template-fields {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.stargate-full-template-fields.hidden {
+    display: none;
+}
+
+/* General hidden class */
+.hidden {
+    display: none !important;
+}
