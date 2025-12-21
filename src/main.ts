@@ -22,7 +22,7 @@ export default class StargatePlugin extends Plugin {
         this.addSettingTab(new StargateSettingTab(this.app, this))
 
         // 리본 아이콘 추가
-        this.addRibbonIcon('globe', 'Open Stargate Browser', () => {
+        this.addRibbonIcon('globe', 'Open Star Gate Browser', () => {
             this.activateBrowserView()
         })
 

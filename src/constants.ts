@@ -7,7 +7,7 @@
 // ============================================
 
 export const PLUGIN_ID = 'stargate'
-export const PLUGIN_NAME = 'Stargate'
+export const PLUGIN_NAME = 'Star Gate'
 export const VIEW_TYPE_BROWSER = 'stargate-browser-view'
 
 // ============================================

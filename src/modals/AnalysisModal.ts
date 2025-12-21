@@ -272,6 +272,111 @@ export class AnalysisModal extends Modal {
     }
 
     /**
+     * YouTube URL인지 확인
+     */
+    private isYouTubeUrl(url: string): boolean {
+        return /(?:youtube\.com|youtu\.be)/i.test(url)
+    }
+
+    /**
+     * YouTube 메타데이터 추출
+     */
+    private extractYouTubeMetadata(url: string, content: string): {
+        channel?: string
+        duration?: string
+        videoType?: string
+        tags?: string
+    } {
+        if (!this.isYouTubeUrl(url)) {
+            return {}
+        }
+
+        const metadata: {
+            channel?: string
+            duration?: string
+            videoType?: string
+            tags?: string
+        } = {}
+
+        // 채널명 추출 패턴들
+        const channelPatterns = [
+            /채널[:\s]*([^\n]+)/i,
+            /channel[:\s]*([^\n]+)/i,
+            /by\s+([^\n]+)/i,
+            /^([^\n]+)\s*님의?\s*(?:채널|영상)/im
+        ]
+        for (const pattern of channelPatterns) {
+            const match = content.match(pattern)
+            if (match && match[1]) {
+                metadata.channel = match[1].trim()
+                break
+            }
+        }
+
+        // 재생시간/길이 추출
+        const durationPatterns = [
+            /(?:재생\s*시간|길이|duration|length)[:\s]*([0-9:]+(?:\s*[시분초])?[0-9:]*)/i,
+            /(\d{1,2}:\d{2}(?::\d{2})?)/  // HH:MM:SS or MM:SS 형식
+        ]
+        for (const pattern of durationPatterns) {
+            const match = content.match(pattern)
+            if (match && match[1]) {
+                metadata.duration = match[1].trim()
+                break
+            }
+        }
+
+        // 영상 유형 추출
+        const typePatterns = [
+            /(?:유형|타입|type|category)[:\s]*([^\n]+)/i,
+            /(?:shorts|라이브|live|스트리밍|streaming)/i
+        ]
+        for (const pattern of typePatterns) {
+            const match = content.match(pattern)
+            if (match) {
+                if (match[1]) {
+                    metadata.videoType = match[1].trim()
+                } else {
+                    metadata.videoType = match[0].trim()
+                }
+                break
+            }
+        }
+
+        // 태그 추출
+        const tagPatterns = [
+            /(?:태그|tags?)[:\s]*([^\n]+)/i,
+            /#([^\s#]+)/g  // 해시태그
+        ]
+
+        // 일반 태그 패턴
+        const tagMatch = content.match(tagPatterns[0])
+        if (tagMatch && tagMatch[1]) {
+            // 쉼표나 공백으로 분리하고 따옴표로 감싸기
+            const tags = tagMatch[1].split(/[,\s]+/)
+                .filter(t => t.trim())
+                .map(t => `"${t.trim()}"`)
+                .join(', ')
+            metadata.tags = tags
+        } else {
+            // 해시태그 추출
+            const hashTags: string[] = []
+            let hashMatch
+            const hashPattern = /#([^\s#]+)/g
+            while ((hashMatch = hashPattern.exec(content)) !== null) {
+                if (hashMatch[1] && hashTags.length < 10) {
+                    hashTags.push(`"${hashMatch[1]}"`)
+                }
+            }
+            if (hashTags.length > 0) {
+                metadata.tags = hashTags.join(', ')
+            }
+        }
+
+        return metadata
+    }
+
+    /**
      * 콘텐츠 소스 + 삽입 위치 한 줄로 렌더링
      */
     private renderSourceAndInsertRow(container: HTMLElement): void {
@@ -878,6 +983,9 @@ export class AnalysisModal extends Modal {
             templateName = 'Custom'
         }
 
+        // YouTube 메타데이터 추출
+        const youtubeMetadata = this.extractYouTubeMetadata(this.options.url, this.editableContent)
+
         const variables: Record<string, string> = {
             title: this.editableTitle || 'Untitled',
             source: this.options.url,
@@ -886,7 +994,12 @@ export class AnalysisModal extends Modal {
             provider: isRaw ? '' : AI_PROVIDERS[this.selectedProvider].name,
             model: isRaw ? '' : (model || ''),
             content: content,
-            original: this.includeOriginal && !isRaw ? this.editableContent : ''
+            original: this.includeOriginal && !isRaw ? this.editableContent : '',
+            // YouTube 메타데이터
+            channel: youtubeMetadata.channel || '',
+            duration: youtubeMetadata.duration || '',
+            videoType: youtubeMetadata.videoType || '',
+            videoTags: youtubeMetadata.tags || ''
         }
 
         // 삽입 위치에 따라 처리

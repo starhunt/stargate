@@ -19,7 +19,7 @@ export class StargateSettingTab extends PluginSettingTab {
         const { containerEl } = this
         containerEl.empty()
 
-        containerEl.createEl('h1', { text: 'Stargate Settings' })
+        containerEl.createEl('h1', { text: 'Star Gate Settings' })
 
         // ============================================
         // Pinned Sites Section
@@ -268,8 +268,16 @@ export class StargateSettingTab extends PluginSettingTab {
                 <li><code>{{date}}</code> - Creation date (ISO format)</li>
                 <li><code>{{template}}</code> - Analysis template name</li>
                 <li><code>{{provider}}</code> - AI provider used</li>
+                <li><code>{{model}}</code> - AI model used</li>
                 <li><code>{{content}}</code> - Analysis result</li>
                 <li><code>{{original}}</code> - Original content (if included)</li>
+            </ul>
+            <p><strong>YouTube variables:</strong></p>
+            <ul>
+                <li><code>{{channel}}</code> - Channel name</li>
+                <li><code>{{duration}}</code> - Video duration</li>
+                <li><code>{{videoType}}</code> - Video type (shorts, live, etc.)</li>
+                <li><code>{{videoTags}}</code> - Video tags</li>
             </ul>
             <p>Conditional sections: <code>{{#key}}...{{/key}}</code> (shown only if value exists)</p>
         `
