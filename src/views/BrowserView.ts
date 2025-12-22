@@ -171,6 +171,33 @@ export class BrowserView extends ItemView {
      * 액션 버튼 렌더링
      */
     private renderActionButtons(container: HTMLElement): void {
+        // 뒤로가기 버튼
+        const backBtn = container.createDiv({ cls: 'stargate-action-btn' })
+        setIcon(backBtn, 'arrow-left')
+        backBtn.setAttribute('aria-label', 'Back')
+        backBtn.onclick = () => this.goBack()
+
+        // 앞으로가기 버튼
+        const forwardBtn = container.createDiv({ cls: 'stargate-action-btn' })
+        setIcon(forwardBtn, 'arrow-right')
+        forwardBtn.setAttribute('aria-label', 'Forward')
+        forwardBtn.onclick = () => this.goForward()
+
+        // 새로고침 버튼
+        const refreshBtn = container.createDiv({ cls: 'stargate-action-btn' })
+        setIcon(refreshBtn, 'refresh-cw')
+        refreshBtn.setAttribute('aria-label', 'Refresh')
+        refreshBtn.onclick = () => this.refreshCurrentPage()
+
+        // 구분선
+        container.createDiv({ cls: 'stargate-action-separator' })
+
+        // 분석 버튼
+        const analyzeBtn = container.createDiv({ cls: 'stargate-action-btn' })
+        setIcon(analyzeBtn, 'sparkles')
+        analyzeBtn.setAttribute('aria-label', 'AI Analysis')
+        analyzeBtn.onclick = () => this.showAnalysisModal()
+
         // 설정 버튼
         const settingsBtn = container.createDiv({ cls: 'stargate-action-btn' })
         setIcon(settingsBtn, 'settings')
@@ -181,18 +208,40 @@ export class BrowserView extends ItemView {
             // @ts-ignore
             this.app.setting.openTabById('stargate')
         }
+    }
 
-        // 분석 버튼
-        const analyzeBtn = container.createDiv({ cls: 'stargate-action-btn' })
-        setIcon(analyzeBtn, 'sparkles')
-        analyzeBtn.setAttribute('aria-label', 'AI Analysis')
-        analyzeBtn.onclick = () => this.showAnalysisModal()
+    /**
+     * 뒤로가기
+     */
+    private goBack(): void {
+        if (!this.activeFrameId) return
 
-        // 새로고침 버튼
-        const refreshBtn = container.createDiv({ cls: 'stargate-action-btn' })
-        setIcon(refreshBtn, 'refresh-cw')
-        refreshBtn.setAttribute('aria-label', 'Refresh')
-        refreshBtn.onclick = () => this.refreshCurrentPage()
+        const cached = this.frameCache.get(this.activeFrameId)
+        if (!cached) return
+
+        if (!this.useIframe) {
+            const webview = cached.frame as WebviewTag
+            if (webview.canGoBack()) {
+                webview.goBack()
+            }
+        }
+    }
+
+    /**
+     * 앞으로가기
+     */
+    private goForward(): void {
+        if (!this.activeFrameId) return
+
+        const cached = this.frameCache.get(this.activeFrameId)
+        if (!cached) return
+
+        if (!this.useIframe) {
+            const webview = cached.frame as WebviewTag
+            if (webview.canGoForward()) {
+                webview.goForward()
+            }
+        }
     }
 
     /**
@@ -344,7 +393,8 @@ export class BrowserView extends ItemView {
         if (this.useIframe) {
             cached.frame = createIframe({ url }, onReady)
         } else {
-            cached.frame = createWebviewTag({ url, profileKey }, onReady, this.frameDoc)
+            const sharedSession = this.plugin.settings.sharedSession
+            cached.frame = createWebviewTag({ url, profileKey, sharedSession }, onReady, this.frameDoc)
 
             // OAuth 및 팝업 처리
             if (cached.frame && 'addEventListener' in cached.frame) {

@@ -9,6 +9,7 @@ import { GOOGLE_URL } from '../constants'
 interface WebviewParams {
     url: string
     profileKey: string
+    sharedSession?: boolean  // true면 모든 탭이 세션 공유
     userAgent?: string
     css?: string
     js?: string
@@ -25,8 +26,12 @@ export function createWebviewTag(
     webviewTag.setAttribute('src', params.url)
 
     // 세션 분리 (partition)
-    // 각 사이트별 독립된 쿠키/스토리지 환경
-    webviewTag.setAttribute('partition', `persist:${params.profileKey}`)
+    // sharedSession이 true면 모든 탭이 같은 세션 사용 (로그인 유지)
+    // false면 각 사이트별 독립된 쿠키/스토리지 환경
+    const partition = params.sharedSession
+        ? 'persist:stargate-shared'
+        : `persist:${params.profileKey}`
+    webviewTag.setAttribute('partition', partition)
 
     // HTTP Referrer 설정
     webviewTag.setAttribute('httpreferrer', params.url || GOOGLE_URL)

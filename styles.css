@@ -172,6 +172,14 @@
     color: var(--text-normal);
 }
 
+/* Action Separator */
+.stargate-action-separator {
+    width: 1px;
+    height: 20px;
+    background: var(--background-modifier-border);
+    margin: 0 4px;
+}
+
 /* ============================================
    Content Area
    ============================================ */

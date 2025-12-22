@@ -129,6 +129,7 @@ export interface PluginSettings {
     pinnedSites: PinnedSite[]       // 고정 사이트
     tempTabs: TempTab[]             // 현재 열린 임시 탭
     activeTabId: string             // 현재 활성 탭 ID
+    sharedSession: boolean          // 세션 공유 모드 (true: 모든 탭이 세션 공유, false: 탭별 독립 세션)
     ai: AISettings
     savedPrompts: SavedPrompt[]
     customTemplates: CustomTemplate[]  // 사용자 정의 템플릿
@@ -202,6 +203,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     pinnedSites: [],
     tempTabs: [],
     activeTabId: '',
+    sharedSession: false,  // 기본값: 탭별 독립 세션
     ai: DEFAULT_AI_SETTINGS,
     savedPrompts: [],
     customTemplates: []

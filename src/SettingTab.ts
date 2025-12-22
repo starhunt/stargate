@@ -48,7 +48,22 @@ export class StargateSettingTab extends PluginSettingTab {
      * 고정 사이트 섹션
      */
     private displayPinnedSitesSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h2', { text: 'Pinned Sites' })
+        containerEl.createEl('h2', { text: 'Browser Settings' })
+
+        // 세션 공유 설정
+        new Setting(containerEl)
+            .setName('Shared Session')
+            .setDesc('Share login sessions across all tabs. When enabled, logging into Google on one tab will apply to all tabs. Requires browser restart to take effect.')
+            .addToggle((toggle) => {
+                toggle.setValue(this.plugin.settings.sharedSession)
+                toggle.onChange(async (value) => {
+                    this.plugin.settings.sharedSession = value
+                    await this.plugin.saveSettings()
+                    new Notice('Session mode changed. Please restart the browser for changes to take effect.')
+                })
+            })
+
+        containerEl.createEl('h3', { text: 'Pinned Sites' })
         containerEl.createEl('p', {
             text: 'Register frequently visited sites. These will appear as permanent tabs.',
             cls: 'setting-item-description'
