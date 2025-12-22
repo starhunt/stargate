@@ -1,7 +1,7 @@
 {
 	"id": "stargate",
 	"name": "Star Gate",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"minAppVersion": "0.15.0",
 	"description": "Web clipper with multi-tab browser, AI analysis templates, and content capture for Obsidian.",
 	"author": "starhunter",
