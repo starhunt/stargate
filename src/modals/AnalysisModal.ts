@@ -141,21 +141,25 @@ export class AnalysisModal extends Modal {
         // 프롬프트 탭 (템플릿 프롬프트 / 커스텀 프롬프트)
         this.renderPromptTabs(contentEl)
 
-        // AI Provider 선택
-        new Setting(contentEl)
-            .setName('AI Provider')
-            .addDropdown((dropdown) => {
-                for (const [key, provider] of Object.entries(AI_PROVIDERS)) {
-                    dropdown.addOption(key, provider.name)
-                }
-                dropdown.setValue(this.selectedProvider)
-                dropdown.onChange((value) => {
-                    this.selectedProvider = value as AIProviderType
-                })
-            })
+        // 하단 액션 바 (Provider + 버튼)
+        const actionBar = contentEl.createDiv({ cls: 'stargate-action-bar' })
 
-        // 버튼
-        const buttonContainer = contentEl.createDiv({ cls: 'stargate-modal-buttons' })
+        // 왼쪽: AI Provider 선택
+        const providerSection = actionBar.createDiv({ cls: 'stargate-provider-section' })
+        providerSection.createEl('span', { text: 'Provider:', cls: 'stargate-provider-label' })
+        const providerSelect = providerSection.createEl('select', { cls: 'stargate-provider-select' })
+        for (const [key, provider] of Object.entries(AI_PROVIDERS)) {
+            const option = providerSelect.createEl('option', { value: key, text: provider.name })
+            if (key === this.selectedProvider) {
+                option.selected = true
+            }
+        }
+        providerSelect.addEventListener('change', (e) => {
+            this.selectedProvider = (e.target as HTMLSelectElement).value as AIProviderType
+        })
+
+        // 오른쪽: 버튼
+        const buttonContainer = actionBar.createDiv({ cls: 'stargate-modal-buttons' })
 
         const cancelBtn = buttonContainer.createEl('button', { text: '취소' })
         cancelBtn.onclick = () => this.close()
@@ -513,7 +517,7 @@ export class AnalysisModal extends Modal {
             placeholder: 'Content to analyze...'
         })
         this.contentTextarea.value = this.editableContent
-        this.contentTextarea.rows = 4
+        this.contentTextarea.rows = 3
         this.contentTextarea.addEventListener('input', (e) => {
             this.editableContent = (e.target as HTMLTextAreaElement).value
             this.updateCharCount()
