@@ -1,6 +1,6 @@
 {
   "name": "stargate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Web clipper with multi-tab browser and AI analysis for Obsidian",
   "main": "main.js",
   "scripts": {
