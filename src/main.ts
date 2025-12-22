@@ -1,6 +1,6 @@
 import { Plugin, WorkspaceLeaf } from 'obsidian'
 import { PluginSettings, DEFAULT_SETTINGS, DEFAULT_AI_SETTINGS, PinnedSite, TempTab, SavedPrompt } from './types'
-import { PLUGIN_ID, VIEW_TYPE_BROWSER, MAX_PINNED_SITES, DEFAULT_PROFILE_KEY } from './constants'
+import { PLUGIN_ID, VIEW_TYPE_BROWSER, DEFAULT_PROFILE_KEY } from './constants'
 import { BrowserView } from './views/BrowserView'
 import { StargateSettingTab } from './SettingTab'
 
@@ -205,10 +205,6 @@ export default class StargatePlugin extends Plugin {
      * 고정 사이트 추가
      */
     async addPinnedSite(site: Omit<PinnedSite, 'id' | 'profileKey'>): Promise<boolean> {
-        if (this.settings.pinnedSites.length >= MAX_PINNED_SITES) {
-            return false
-        }
-
         const newSite: PinnedSite = {
             id: `pinned-${Date.now()}`,
             profileKey: `${DEFAULT_PROFILE_KEY}-${Date.now()}`,

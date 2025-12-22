@@ -14,7 +14,7 @@ export const VIEW_TYPE_BROWSER = 'stargate-browser-view'
 // Tab System
 // ============================================
 
-export const MAX_PINNED_SITES = 5
+export const MAX_PINNED_SITES = Infinity  // 무제한
 export const DEFAULT_PROFILE_KEY = 'stargate-default'
 
 // ============================================

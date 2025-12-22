@@ -126,7 +126,7 @@ export interface AnalysisConfig {
  */
 export interface PluginSettings {
     uuid: string
-    pinnedSites: PinnedSite[]       // 고정 사이트 (최대 5개)
+    pinnedSites: PinnedSite[]       // 고정 사이트
     tempTabs: TempTab[]             // 현재 열린 임시 탭
     activeTabId: string             // 현재 활성 탭 ID
     ai: AISettings

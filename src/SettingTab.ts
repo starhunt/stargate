@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting, Notice, Platform } from 'obsidian'
 import StargatePlugin from './main'
-import { MAX_PINNED_SITES, AI_PROVIDERS } from './constants'
+import { AI_PROVIDERS } from './constants'
 import { AIProviderType, PinnedSite, DEFAULT_NOTE_TEMPLATE, TemplateType, CustomTemplate } from './types'
 import { EditSiteModal } from './modals/EditSiteModal'
 import { EditPromptModal } from './modals/EditPromptModal'
@@ -50,7 +50,7 @@ export class StargateSettingTab extends PluginSettingTab {
     private displayPinnedSitesSection(containerEl: HTMLElement): void {
         containerEl.createEl('h2', { text: 'Pinned Sites' })
         containerEl.createEl('p', {
-            text: `Register frequently visited sites (max ${MAX_PINNED_SITES}). These will appear as permanent tabs.`,
+            text: 'Register frequently visited sites. These will appear as permanent tabs.',
             cls: 'setting-item-description'
         })
 
@@ -62,14 +62,12 @@ export class StargateSettingTab extends PluginSettingTab {
         }
 
         // 사이트 추가 버튼
-        const canAdd = this.plugin.settings.pinnedSites.length < MAX_PINNED_SITES
         new Setting(containerEl)
-            .setName(`Add Site (${this.plugin.settings.pinnedSites.length}/${MAX_PINNED_SITES})`)
-            .setDesc(canAdd ? 'Add a new pinned site' : 'Maximum sites reached')
+            .setName(`Add Site (${this.plugin.settings.pinnedSites.length})`)
+            .setDesc('Add a new pinned site')
             .addButton((button) => {
                 button
                     .setButtonText('+ Add Site')
-                    .setDisabled(!canAdd)
                     .onClick(() => this.showAddSiteModal())
             })
     }
