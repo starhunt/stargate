@@ -40,6 +40,7 @@ YouTube URL 감지 시 자동으로 메타데이터 추출:
 | Anthropic | Claude |
 | Google Gemini | Gemini 2.0 Flash 등 |
 | Groq | Llama 3.3 70B 등 (초고속) |
+| xAI (Grok) | Grok-2 |
 | z.ai (GLM) | GLM-4 |
 | Ollama | 로컬 LLM |
 

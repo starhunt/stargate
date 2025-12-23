@@ -78,6 +78,11 @@ export const AI_PROVIDERS = {
         defaultModel: 'llama-3.3-70b-versatile',
         baseUrl: 'https://api.groq.com/openai/v1/chat/completions'
     },
+    xai: {
+        name: 'xAI (Grok)',
+        defaultModel: 'grok-2-latest',
+        baseUrl: 'https://api.x.ai/v1/chat/completions'
+    },
     zai: {
         name: 'z.ai (GLM)',
         defaultModel: 'glm-4-flash',

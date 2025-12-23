@@ -74,6 +74,8 @@ export class AIService {
                     return await this.callGemini(messages, apiKey!, model, baseUrl)
                 case 'groq':
                     return await this.callGroq(messages, apiKey!, model, baseUrl)
+                case 'xai':
+                    return await this.callXAI(messages, apiKey!, model, baseUrl)
                 case 'zai':
                     return await this.callZAI(messages, apiKey!, model, baseUrl)
                 case 'ollama':
@@ -233,6 +235,37 @@ export class AIService {
         return {
             content: data.choices[0]?.message?.content || '',
             provider: 'groq',
+            model
+        }
+    }
+
+    /**
+     * xAI (Grok) API 호출 (OpenAI 호환)
+     */
+    private async callXAI(
+        messages: AIMessage[],
+        apiKey: string,
+        model: string,
+        baseUrl: string
+    ): Promise<AIResponse> {
+        const response = await requestUrl({
+            url: baseUrl,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model,
+                messages,
+                max_tokens: 4096
+            })
+        })
+
+        const data = response.json
+        return {
+            content: data.choices[0]?.message?.content || '',
+            provider: 'xai',
             model
         }
     }
