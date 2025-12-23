@@ -73,6 +73,11 @@ export const AI_PROVIDERS = {
         defaultModel: 'gemini-2.0-flash',
         baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
     },
+    groq: {
+        name: 'Groq',
+        defaultModel: 'llama-3.3-70b-versatile',
+        baseUrl: 'https://api.groq.com/openai/v1/chat/completions'
+    },
     zai: {
         name: 'z.ai (GLM)',
         defaultModel: 'glm-4-flash',

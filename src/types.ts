@@ -44,7 +44,7 @@ export interface TabState {
 /**
  * AI Provider 타입
  */
-export type AIProviderType = 'openai' | 'anthropic' | 'gemini' | 'zai' | 'ollama'
+export type AIProviderType = 'openai' | 'anthropic' | 'gemini' | 'groq' | 'zai' | 'ollama'
 
 /**
  * AI 설정
@@ -184,6 +184,7 @@ export const DEFAULT_AI_SETTINGS: AISettings = {
         openai: 'gpt-4o',
         anthropic: 'claude-sonnet-4-20250514',
         gemini: 'gemini-2.0-flash',
+        groq: 'llama-3.3-70b-versatile',
         zai: 'glm-4-flash',
         ollama: 'llama3.2'
     },
