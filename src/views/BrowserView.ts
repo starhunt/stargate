@@ -572,7 +572,7 @@ export class BrowserView extends ItemView {
         // 제목 추출 (콘텐츠에서 자동 추출)
         const title = this.extractTitleFromContent(textToSave)
         const url = this.currentTabState?.url || ''
-        const notesFolder = this.plugin.settings.ai.notesFolder || 'Clippings'
+        const notesFolder = this.plugin.settings.aiGlobal.notesFolder || 'Clippings'
 
         // 폴더 확인/생성
         const folder = this.app.vault.getAbstractFileByPath(notesFolder)

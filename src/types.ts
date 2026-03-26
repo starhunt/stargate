@@ -2,6 +2,8 @@
  * Stargate Plugin Types
  */
 
+import type { SupportedLocale } from './i18n'
+
 // ============================================
 // Tab System Types
 // ============================================
@@ -38,28 +40,97 @@ export interface TabState {
 }
 
 // ============================================
-// AI Types
+// AI Types (v2 - 동적 제공자/모델)
 // ============================================
 
-/**
- * AI Provider 타입
- */
-export type AIProviderType = 'openai' | 'anthropic' | 'gemini' | 'groq' | 'xai' | 'zai' | 'ollama'
+/** AI 제공자 식별자 (string 기반, 커스텀 제공자 지원) */
+export type AIProvider = string
+
+/** API 호출 형식 */
+export type AIApiFormat = 'openai' | 'anthropic' | 'gemini' | 'ollama'
+
+/** 인증 방식 */
+export type AIAuthType = 'bearer' | 'x-api-key' | 'query' | 'none'
 
 /**
- * AI 설정
+ * AI 제공자 정의
  */
-export interface AISettings {
-    provider: AIProviderType
-    apiKeys: Partial<Record<AIProviderType, string>>
-    models: Partial<Record<AIProviderType, string>>
+export interface AIProviderDefinition {
+    /** 고유 식별자 (예: 'gemini', 'openai', 'my-custom') */
+    id: string
+    /** 표시 이름 (예: 'Google Gemini') */
+    name: string
+    /** API 엔드포인트 기본 URL */
+    baseUrl: string
+    /** API 키 */
+    apiKey: string
+    /** 인증 방식 */
+    authType: AIAuthType
+    /** API 호출 형식 (기본: 'openai') */
+    apiFormat: AIApiFormat
+    /** 빌트인 프리셋 여부 (프리셋은 삭제 불가) */
+    isBuiltIn: boolean
+}
+
+/**
+ * AI 모델 정의
+ */
+export interface AIModelDefinition {
+    /** 모델 ID (API 호출용, 예: 'gemini-2.0-flash') */
+    id: string
+    /** 표시 이름 (예: 'Gemini 2.0 Flash') */
+    name: string
+    /** 소속 제공자 ID */
+    providerId: string
+    /** 활성화 여부 */
+    enabled: boolean
+    /** 모델 전용 API 키 (미설정 시 제공자의 키 사용) */
+    apiKey?: string
+}
+
+/**
+ * AI 서비스 설정 (v2)
+ */
+export interface AIServiceConfig {
+    providers: AIProviderDefinition[]
+    models: AIModelDefinition[]
+    defaultProviderId: string
+    defaultModelId: string
+}
+
+/**
+ * AI 글로벌 설정
+ */
+export interface AIGlobalSettings {
     maxTokens: number
     defaultLanguage: string
     defaultTemplate: TemplateType  // 빠른 분석용 기본 템플릿
     autoTags: boolean
     notesFolder: string
-    noteTemplate: string  // 노트 템플릿 (변수: {{title}}, {{source}}, {{date}}, {{template}}, {{provider}}, {{content}}, {{original}})
+    noteTemplate: string
 }
+
+// ── v1 호환 타입 (마이그레이션용) ──
+
+/** @deprecated v1 호환용 */
+export type AIProviderType = 'openai' | 'anthropic' | 'gemini' | 'groq' | 'xai' | 'zai' | 'ollama'
+
+/** @deprecated v1 호환용 */
+export interface AISettingsV1 {
+    provider: AIProviderType
+    apiKeys: Partial<Record<AIProviderType, string>>
+    models: Partial<Record<AIProviderType, string>>
+    maxTokens: number
+    defaultLanguage: string
+    defaultTemplate: TemplateType
+    autoTags: boolean
+    notesFolder: string
+    noteTemplate: string
+}
+
+// ============================================
+// Template Types
+// ============================================
 
 /**
  * 분석 템플릿 타입
@@ -87,8 +158,6 @@ export interface AnalysisTemplate {
 
 /**
  * 사용자 저장 프롬프트
- * - systemPrompt가 있으면: 전체 템플릿 (템플릿 버튼 영역에 표시)
- * - systemPrompt가 없으면: 빠른 프롬프트 (커스텀 프롬프트 탭에 표시)
  */
 export interface SavedPrompt {
     id: string              // 'custom-{timestamp}'
@@ -113,26 +182,35 @@ export interface CustomTemplate {
 export interface AnalysisConfig {
     templateId: TemplateType | null
     customPrompt: string | null
-    provider: AIProviderType
+    providerId: string
+    modelId: string
     language: string
 }
 
 // ============================================
-// Plugin Settings
+// Plugin Settings (v2)
 // ============================================
 
 /**
  * 플러그인 설정
  */
 export interface PluginSettings {
+    settingsVersion: number     // v2
     uuid: string
-    pinnedSites: PinnedSite[]       // 고정 사이트
-    tempTabs: TempTab[]             // 현재 열린 임시 탭
-    activeTabId: string             // 현재 활성 탭 ID
-    sharedSession: boolean          // 세션 공유 모드 (true: 모든 탭이 세션 공유, false: 탭별 독립 세션)
-    ai: AISettings
+    language: SupportedLocale   // UI 언어 설정
+    pinnedSites: PinnedSite[]
+    tempTabs: TempTab[]
+    activeTabId: string
+    sharedSession: boolean
+    // AI v2 설정
+    providers: AIProviderDefinition[]
+    models: AIModelDefinition[]
+    defaultProviderId: string
+    defaultModelId: string
+    // AI 글로벌 설정
+    aiGlobal: AIGlobalSettings
     savedPrompts: SavedPrompt[]
-    customTemplates: CustomTemplate[]  // 사용자 정의 템플릿
+    customTemplates: CustomTemplate[]
 }
 
 /**
@@ -175,38 +253,33 @@ tags: [stargate/clipping]
 `
 
 /**
- * 기본 AI 설정
+ * 기본 AI 글로벌 설정
  */
-export const DEFAULT_AI_SETTINGS: AISettings = {
-    provider: 'openai',
-    apiKeys: {},
-    models: {
-        openai: 'gpt-4o',
-        anthropic: 'claude-sonnet-4-20250514',
-        gemini: 'gemini-2.0-flash',
-        groq: 'llama-3.3-70b-versatile',
-        xai: 'grok-2-latest',
-        zai: 'glm-4-flash',
-        ollama: 'llama3.2'
-    },
+export const DEFAULT_AI_GLOBAL_SETTINGS: AIGlobalSettings = {
     maxTokens: 64000,
     defaultLanguage: 'ko',
     defaultTemplate: 'briefing',
     autoTags: true,
     notesFolder: 'Clippings',
-    noteTemplate: DEFAULT_NOTE_TEMPLATE
+    noteTemplate: DEFAULT_NOTE_TEMPLATE,
 }
 
 /**
  * 기본 플러그인 설정
  */
 export const DEFAULT_SETTINGS: PluginSettings = {
+    settingsVersion: 2,
     uuid: '',
+    language: 'auto',
     pinnedSites: [],
     tempTabs: [],
     activeTabId: '',
-    sharedSession: false,  // 기본값: 탭별 독립 세션
-    ai: DEFAULT_AI_SETTINGS,
+    sharedSession: false,
+    providers: [],      // 초기화 시 BUILT_IN_PROVIDERS로 채움
+    models: [],         // 초기화 시 BUILT_IN_MODELS로 채움
+    defaultProviderId: 'openai',
+    defaultModelId: 'gpt-4o',
+    aiGlobal: DEFAULT_AI_GLOBAL_SETTINGS,
     savedPrompts: [],
-    customTemplates: []
+    customTemplates: [],
 }

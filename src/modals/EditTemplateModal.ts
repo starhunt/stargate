@@ -4,6 +4,7 @@
 
 import { App, Modal, Setting, Notice } from 'obsidian'
 import { AnalysisTemplate } from '../types'
+import { t } from '../i18n'
 
 interface EditTemplateModalOptions {
     template: AnalysisTemplate
@@ -23,13 +24,13 @@ export class EditTemplateModal extends Modal {
     }
 
     onOpen() {
-        const { contentEl } = this
+        const { contentEl, modalEl } = this
         contentEl.empty()
-        contentEl.addClass('stargate-edit-template-modal')
+        modalEl.addClass('stargate-edit-template-modal')
 
         // 제목
         contentEl.createEl('h2', {
-            text: `Edit Template: ${this.options.template.icon} ${this.options.template.name}`
+            text: t().templateModal.editTitle(this.options.template.icon, this.options.template.name)
         })
 
         // 설명
@@ -40,9 +41,9 @@ export class EditTemplateModal extends Modal {
 
         // System Prompt 섹션
         const systemSection = contentEl.createDiv({ cls: 'stargate-template-section' })
-        systemSection.createEl('h3', { text: 'System Prompt' })
+        systemSection.createEl('h3', { text: t().templateModal.systemPrompt })
         systemSection.createEl('p', {
-            text: 'Instructions for the AI model (role, behavior, formatting)',
+            text: t().templateModal.systemPromptDesc,
             cls: 'setting-item-description'
         })
 
@@ -57,10 +58,10 @@ export class EditTemplateModal extends Modal {
 
         // User Prompt Template 섹션
         const userSection = contentEl.createDiv({ cls: 'stargate-template-section' })
-        userSection.createEl('h3', { text: 'User Prompt Template' })
+        userSection.createEl('h3', { text: t().templateModal.userPromptTemplate })
 
         const helpEl = userSection.createEl('p', { cls: 'setting-item-description' })
-        helpEl.innerHTML = 'Template for user messages. Use <code>{{content}}</code> for the actual content.'
+        helpEl.innerHTML = t().templateModal.userPromptDesc
 
         const userTextarea = userSection.createEl('textarea', {
             cls: 'stargate-template-textarea'
@@ -74,24 +75,24 @@ export class EditTemplateModal extends Modal {
         // 버튼
         const buttonContainer = contentEl.createDiv({ cls: 'stargate-modal-buttons' })
 
-        const cancelBtn = buttonContainer.createEl('button', { text: 'Cancel' })
+        const cancelBtn = buttonContainer.createEl('button', { text: t().common.cancel })
         cancelBtn.onclick = () => this.close()
 
         const saveBtn = buttonContainer.createEl('button', {
-            text: 'Save',
+            text: t().common.save,
             cls: 'mod-cta'
         })
         saveBtn.onclick = () => {
             if (!this.systemPrompt.trim()) {
-                new Notice('System prompt cannot be empty')
+                new Notice(t().templateModal.systemPromptEmpty)
                 return
             }
             if (!this.userPromptTemplate.trim()) {
-                new Notice('User prompt template cannot be empty')
+                new Notice(t().templateModal.userPromptEmpty)
                 return
             }
             if (!this.userPromptTemplate.includes('{{content}}')) {
-                new Notice('User prompt must include {{content}} variable')
+                new Notice(t().templateModal.userPromptMissingContent)
                 return
             }
 

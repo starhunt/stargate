@@ -1,10 +1,9 @@
 /**
- * AI Service - 다양한 AI Provider 통합
+ * AI Service - 동적 제공자/모델 기반 통합 (v2)
  */
 
 import { requestUrl } from 'obsidian'
-import { AIProviderType, AISettings } from '../types'
-import { AI_PROVIDERS } from '../constants'
+import { AIProviderDefinition, AIModelDefinition, AIApiFormat } from '../types'
 
 export interface AIMessage {
     role: 'system' | 'user' | 'assistant'
@@ -13,32 +12,99 @@ export interface AIMessage {
 
 export interface AIResponse {
     content: string
-    provider: AIProviderType
+    provider: string
     model: string
     error?: string
 }
 
 export class AIService {
-    private settings: AISettings
+    private providers: AIProviderDefinition[]
+    private models: AIModelDefinition[]
+    private defaultProviderId: string
+    private defaultModelId: string
 
-    constructor(settings: AISettings) {
-        this.settings = settings
+    constructor(
+        providers: AIProviderDefinition[],
+        models: AIModelDefinition[],
+        defaultProviderId: string,
+        defaultModelId: string,
+    ) {
+        this.providers = providers
+        this.models = models
+        this.defaultProviderId = defaultProviderId
+        this.defaultModelId = defaultModelId
     }
 
     /**
      * 설정 업데이트
      */
-    updateSettings(settings: AISettings): void {
-        this.settings = settings
+    updateSettings(
+        providers: AIProviderDefinition[],
+        models: AIModelDefinition[],
+        defaultProviderId: string,
+        defaultModelId: string,
+    ): void {
+        this.providers = providers
+        this.models = models
+        this.defaultProviderId = defaultProviderId
+        this.defaultModelId = defaultModelId
+    }
+
+    /**
+     * 제공자 조회
+     */
+    getProvider(providerId: string): AIProviderDefinition | undefined {
+        return this.providers.find(p => p.id === providerId)
+    }
+
+    /**
+     * 모델 조회
+     */
+    getModel(modelId: string): AIModelDefinition | undefined {
+        return this.models.find(m => m.id === modelId)
     }
 
     /**
      * Provider가 설정되어 있는지 확인
      */
-    isProviderConfigured(provider: AIProviderType): boolean {
-        // Ollama는 API 키 필요 없음
-        if (provider === 'ollama') return true
-        return !!this.settings.apiKeys[provider]
+    isProviderConfigured(providerId: string): boolean {
+        const provider = this.getProvider(providerId)
+        if (!provider) return false
+        // none 인증 (Ollama 등)은 키 불필요
+        if (provider.authType === 'none') return true
+        return !!provider.apiKey
+    }
+
+    /**
+     * 연결 테스트
+     */
+    async testConnection(
+        providerId: string,
+        modelId: string,
+        overrideApiKey?: string,
+    ): Promise<boolean> {
+        const provider = this.getProvider(providerId)
+        if (!provider) {
+            console.error(`[Stargate] testConnection: Provider not found: ${providerId}`)
+            return false
+        }
+
+        const effectiveKey = overrideApiKey || provider.apiKey
+        console.log(`[Stargate] testConnection - Provider: ${provider.name} (${provider.id}), Model: ${modelId}, Format: ${provider.apiFormat}, BaseUrl: ${provider.baseUrl}, AuthType: ${provider.authType}, HasKey: ${!!effectiveKey}`)
+
+        try {
+            const messages: AIMessage[] = [
+                { role: 'user', content: 'Hello, respond with "OK" only.' }
+            ]
+            const response = await this.callProvider(provider, modelId, messages, effectiveKey)
+            if (response.error) {
+                console.error(`[Stargate] testConnection failed:`, response.error)
+            }
+            return !response.error && response.content.length > 0
+        } catch (error) {
+            console.error(`[Stargate] testConnection error:`, error)
+            return false
+        }
     }
 
     /**
@@ -46,136 +112,162 @@ export class AIService {
      */
     async sendRequest(
         messages: AIMessage[],
-        provider?: AIProviderType
+        providerId?: string,
+        modelId?: string,
     ): Promise<AIResponse> {
-        const activeProvider = provider || this.settings.provider
-        const apiKey = this.settings.apiKeys[activeProvider]
-        const model = this.settings.models[activeProvider] || AI_PROVIDERS[activeProvider].defaultModel
-        const baseUrl = AI_PROVIDERS[activeProvider].baseUrl
+        const activeProviderId = providerId || this.defaultProviderId
+        const provider = this.getProvider(activeProviderId)
 
-        if (!this.isProviderConfigured(activeProvider)) {
+        if (!provider) {
             return {
                 content: '',
-                provider: activeProvider,
-                model,
-                error: `API key not configured for ${AI_PROVIDERS[activeProvider].name}`
+                provider: activeProviderId,
+                model: modelId || '',
+                error: `Provider not found: ${activeProviderId}`
+            }
+        }
+
+        // 모델 결정: 명시적 모델 > 기본 모델
+        const activeModelId = modelId || this.defaultModelId
+        const model = this.getModel(activeModelId)
+        const effectiveModelId = activeModelId
+        const effectiveKey = model?.apiKey || provider.apiKey
+
+        if (!this.isProviderConfigured(activeProviderId) && !model?.apiKey) {
+            return {
+                content: '',
+                provider: activeProviderId,
+                model: effectiveModelId,
+                error: `API key not configured for ${provider.name}`
             }
         }
 
         try {
-            console.log(`[Stargate] API Call - Provider: ${activeProvider}, Model: ${model}, URL: ${baseUrl}`)
-
-            switch (activeProvider) {
-                case 'openai':
-                    return await this.callOpenAI(messages, apiKey!, model, baseUrl)
-                case 'anthropic':
-                    return await this.callAnthropic(messages, apiKey!, model, baseUrl)
-                case 'gemini':
-                    return await this.callGemini(messages, apiKey!, model, baseUrl)
-                case 'groq':
-                    return await this.callGroq(messages, apiKey!, model, baseUrl)
-                case 'xai':
-                    return await this.callXAI(messages, apiKey!, model, baseUrl)
-                case 'zai':
-                    return await this.callZAI(messages, apiKey!, model, baseUrl)
-                case 'ollama':
-                    return await this.callOllama(messages, model, baseUrl)
-                default:
-                    throw new Error(`Unknown provider: ${activeProvider}`)
-            }
+            console.log(`[Stargate] API Call - Provider: ${provider.name}, Model: ${effectiveModelId}, Format: ${provider.apiFormat}`)
+            return await this.callProvider(provider, effectiveModelId, messages, effectiveKey)
         } catch (error) {
             return {
                 content: '',
-                provider: activeProvider,
-                model,
+                provider: activeProviderId,
+                model: effectiveModelId,
                 error: error instanceof Error ? error.message : 'Unknown error'
             }
         }
     }
 
     /**
-     * OpenAI API 호출
+     * 제공자별 API 호출 (apiFormat 기반 라우팅)
      */
-    private async callOpenAI(
+    private async callProvider(
+        provider: AIProviderDefinition,
+        modelId: string,
         messages: AIMessage[],
         apiKey: string,
-        model: string,
-        baseUrl: string
     ): Promise<AIResponse> {
+        switch (provider.apiFormat) {
+            case 'openai':
+                return await this.callOpenAIFormat(provider, modelId, messages, apiKey)
+            case 'anthropic':
+                return await this.callAnthropicFormat(provider, modelId, messages, apiKey)
+            case 'gemini':
+                return await this.callGeminiFormat(provider, modelId, messages, apiKey)
+            case 'ollama':
+                return await this.callOllamaFormat(provider, modelId, messages)
+            default:
+                throw new Error(`Unknown API format: ${provider.apiFormat}`)
+        }
+    }
+
+    /**
+     * OpenAI 호환 API 호출 (OpenAI, Groq, xAI, z.ai 등)
+     */
+    private async callOpenAIFormat(
+        provider: AIProviderDefinition,
+        modelId: string,
+        messages: AIMessage[],
+        apiKey: string,
+    ): Promise<AIResponse> {
+        const url = `${provider.baseUrl}/chat/completions`
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        }
+
+        if (provider.authType === 'bearer') {
+            headers['Authorization'] = `Bearer ${apiKey}`
+        } else if (provider.authType === 'x-api-key') {
+            headers['x-api-key'] = apiKey
+        }
+
         const response = await requestUrl({
-            url: baseUrl,
+            url,
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
+            headers,
             body: JSON.stringify({
-                model,
+                model: modelId,
                 messages,
-                max_tokens: 4096
+                max_tokens: 4096,
             })
         })
 
         const data = response.json
         return {
-            content: data.choices[0]?.message?.content || '',
-            provider: 'openai',
-            model
+            content: data.choices?.[0]?.message?.content || '',
+            provider: provider.id,
+            model: modelId,
         }
     }
 
     /**
      * Anthropic API 호출
      */
-    private async callAnthropic(
+    private async callAnthropicFormat(
+        provider: AIProviderDefinition,
+        modelId: string,
         messages: AIMessage[],
         apiKey: string,
-        model: string,
-        baseUrl: string
     ): Promise<AIResponse> {
-        // Anthropic은 system 메시지를 별도로 처리
+        const url = `${provider.baseUrl}/messages`
         const systemMessage = messages.find(m => m.role === 'system')
         const otherMessages = messages.filter(m => m.role !== 'system')
 
         const response = await requestUrl({
-            url: baseUrl,
+            url,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01'
+                'anthropic-version': '2023-06-01',
             },
             body: JSON.stringify({
-                model,
+                model: modelId,
                 max_tokens: 4096,
                 system: systemMessage?.content || '',
                 messages: otherMessages.map(m => ({
                     role: m.role,
-                    content: m.content
+                    content: m.content,
                 }))
             })
         })
 
         const data = response.json
         return {
-            content: data.content[0]?.text || '',
-            provider: 'anthropic',
-            model
+            content: data.content?.[0]?.text || '',
+            provider: provider.id,
+            model: modelId,
         }
     }
 
     /**
      * Google Gemini API 호출
      */
-    private async callGemini(
+    private async callGeminiFormat(
+        provider: AIProviderDefinition,
+        modelId: string,
         messages: AIMessage[],
         apiKey: string,
-        model: string,
-        baseUrl: string
     ): Promise<AIResponse> {
-        const url = `${baseUrl}/models/${model}:generateContent?key=${apiKey}`
+        const url = `${provider.baseUrl}/models/${modelId}:generateContent?key=${apiKey}`
 
-        // Gemini 형식으로 변환
         const contents = messages
             .filter(m => m.role !== 'system')
             .map(m => ({
@@ -189,144 +281,53 @@ export class AIService {
             url,
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 contents,
                 systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
                 generationConfig: {
-                    maxOutputTokens: 4096
-                }
+                    maxOutputTokens: 4096,
+                },
             })
         })
 
         const data = response.json
         return {
             content: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
-            provider: 'gemini',
-            model
-        }
-    }
-
-    /**
-     * Groq API 호출 (OpenAI 호환)
-     */
-    private async callGroq(
-        messages: AIMessage[],
-        apiKey: string,
-        model: string,
-        baseUrl: string
-    ): Promise<AIResponse> {
-        const response = await requestUrl({
-            url: baseUrl,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model,
-                messages,
-                max_tokens: 4096
-            })
-        })
-
-        const data = response.json
-        return {
-            content: data.choices[0]?.message?.content || '',
-            provider: 'groq',
-            model
-        }
-    }
-
-    /**
-     * xAI (Grok) API 호출 (OpenAI 호환)
-     */
-    private async callXAI(
-        messages: AIMessage[],
-        apiKey: string,
-        model: string,
-        baseUrl: string
-    ): Promise<AIResponse> {
-        const response = await requestUrl({
-            url: baseUrl,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model,
-                messages,
-                max_tokens: 4096
-            })
-        })
-
-        const data = response.json
-        return {
-            content: data.choices[0]?.message?.content || '',
-            provider: 'xai',
-            model
-        }
-    }
-
-    /**
-     * z.ai (GLM) API 호출
-     */
-    private async callZAI(
-        messages: AIMessage[],
-        apiKey: string,
-        model: string,
-        baseUrl: string
-    ): Promise<AIResponse> {
-        const response = await requestUrl({
-            url: baseUrl,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model,
-                messages,
-                max_tokens: 4096
-            })
-        })
-
-        const data = response.json
-        return {
-            content: data.choices[0]?.message?.content || '',
-            provider: 'zai',
-            model
+            provider: provider.id,
+            model: modelId,
         }
     }
 
     /**
      * Ollama API 호출 (로컬)
      */
-    private async callOllama(
+    private async callOllamaFormat(
+        provider: AIProviderDefinition,
+        modelId: string,
         messages: AIMessage[],
-        model: string,
-        baseUrl: string
     ): Promise<AIResponse> {
+        const url = `${provider.baseUrl}/api/chat`
+
         const response = await requestUrl({
-            url: baseUrl,
+            url,
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model,
+                model: modelId,
                 messages,
-                stream: false
+                stream: false,
             })
         })
 
         const data = response.json
         return {
             content: data.message?.content || '',
-            provider: 'ollama',
-            model
+            provider: provider.id,
+            model: modelId,
         }
     }
 }

@@ -4,10 +4,10 @@
 
 import { App, Modal, Setting, Notice, TFile, MarkdownView } from 'obsidian'
 import StargatePlugin from '../main'
-import { TemplateType, AIProviderType } from '../types'
-import { ANALYSIS_TEMPLATES, getTemplateById, getEffectiveTemplate, renderPrompt } from '../ai/templates'
+import { TemplateType } from '../types'
+import { getAnalysisTemplates, getTemplateById, getEffectiveTemplate, renderPrompt } from '../ai/templates'
 import { AIService, AIMessage } from '../services/AIService'
-import { AI_PROVIDERS } from '../constants'
+import { t } from '../i18n'
 
 type ContentSourceType = 'full' | 'selection' | 'clipboard'
 type PromptTabType = 'template' | 'custom'
@@ -30,7 +30,8 @@ export class AnalysisModal extends Modal {
 
     private selectedTemplateId: SelectedTemplateType | null = null
     private customPrompt: string = ''
-    private selectedProvider: AIProviderType
+    private selectedProviderId: string
+    private selectedModelId: string
     private isAnalyzing = false
 
     // 편집 가능한 필드
@@ -59,10 +60,11 @@ export class AnalysisModal extends Modal {
         super(app)
         this.plugin = plugin
         this.options = options
-        this.aiService = new AIService(plugin.settings.ai)
-        this.selectedProvider = plugin.settings.ai.provider
+        this.aiService = plugin.aiService
+        this.selectedProviderId = plugin.settings.defaultProviderId
+        this.selectedModelId = plugin.settings.defaultModelId
         // 기본 템플릿 선택
-        this.selectedTemplateId = plugin.settings.ai.defaultTemplate
+        this.selectedTemplateId = plugin.settings.aiGlobal.defaultTemplate
         // 제목은 autoExtractTitle이 false일 때만 options.title 사용
         this.editableTitle = ''
     }
@@ -99,7 +101,7 @@ export class AnalysisModal extends Modal {
 
         // 빠른 분석 모드: UI 없이 바로 실행
         if (this.options.quickMode) {
-            this.selectedTemplateId = this.plugin.settings.ai.defaultTemplate
+            this.selectedTemplateId = this.plugin.settings.aiGlobal.defaultTemplate
             contentEl.createEl('h2', { text: 'Quick Analysis' })
             const statusEl = contentEl.createDiv({ cls: 'stargate-quick-status' })
             statusEl.innerHTML = '<span class="stargate-spinner"></span><span>분석 중...</span>'
@@ -144,18 +146,43 @@ export class AnalysisModal extends Modal {
         // 하단 액션 바 (Provider + 버튼)
         const actionBar = contentEl.createDiv({ cls: 'stargate-action-bar' })
 
-        // 왼쪽: AI Provider 선택
+        // 왼쪽: AI Provider + Model 선택
         const providerSection = actionBar.createDiv({ cls: 'stargate-provider-section' })
-        providerSection.createEl('span', { text: 'Provider:', cls: 'stargate-provider-label' })
+        providerSection.createEl('span', { text: t().analysis.provider, cls: 'stargate-provider-label' })
         const providerSelect = providerSection.createEl('select', { cls: 'stargate-provider-select' })
-        for (const [key, provider] of Object.entries(AI_PROVIDERS)) {
-            const option = providerSelect.createEl('option', { value: key, text: provider.name })
-            if (key === this.selectedProvider) {
+        for (const provider of this.plugin.settings.providers) {
+            const option = providerSelect.createEl('option', { value: provider.id, text: provider.name })
+            if (provider.id === this.selectedProviderId) {
                 option.selected = true
             }
         }
+
+        const modelSelect = providerSection.createEl('select', { cls: 'stargate-provider-select' })
+        const updateModelSelect = () => {
+            modelSelect.empty()
+            const providerModels = this.plugin.settings.models.filter(
+                m => m.providerId === this.selectedProviderId && m.enabled
+            )
+            for (const model of providerModels) {
+                const option = modelSelect.createEl('option', { value: model.id, text: model.name })
+                if (model.id === this.selectedModelId) {
+                    option.selected = true
+                }
+            }
+        }
+        updateModelSelect()
+
         providerSelect.addEventListener('change', (e) => {
-            this.selectedProvider = (e.target as HTMLSelectElement).value as AIProviderType
+            this.selectedProviderId = (e.target as HTMLSelectElement).value
+            // 해당 제공자의 첫 번째 모델로 변경
+            const providerModels = this.plugin.settings.models.filter(
+                m => m.providerId === this.selectedProviderId && m.enabled
+            )
+            this.selectedModelId = providerModels[0]?.id || ''
+            updateModelSelect()
+        })
+        modelSelect.addEventListener('change', (e) => {
+            this.selectedModelId = (e.target as HTMLSelectElement).value
         })
 
         // 오른쪽: 버튼
@@ -555,7 +582,7 @@ export class AnalysisModal extends Modal {
         const templatesEl = container.createDiv({ cls: 'stargate-templates' })
 
         // 기본 템플릿들
-        for (const template of ANALYSIS_TEMPLATES) {
+        for (const template of getAnalysisTemplates()) {
             const btn = templatesEl.createDiv({
                 cls: `stargate-template-btn ${this.selectedTemplateId === template.id ? 'selected' : ''}`
             })
@@ -812,7 +839,7 @@ export class AnalysisModal extends Modal {
                 rawBtn?.addClass('selected')
             } else {
                 // 기본 템플릿 확인
-                const selectedIndex = ANALYSIS_TEMPLATES.findIndex((t) => t.id === this.selectedTemplateId)
+                const selectedIndex = getAnalysisTemplates().findIndex((t) => t.id === this.selectedTemplateId)
                 if (selectedIndex >= 0 && btns[selectedIndex]) {
                     btns[selectedIndex].addClass('selected')
                 } else {
@@ -854,8 +881,9 @@ export class AnalysisModal extends Modal {
             return
         }
 
-        if (!this.aiService.isProviderConfigured(this.selectedProvider)) {
-            new Notice(`Please configure API key for ${AI_PROVIDERS[this.selectedProvider].name} in settings`)
+        if (!this.aiService.isProviderConfigured(this.selectedProviderId)) {
+            const provider = this.aiService.getProvider(this.selectedProviderId)
+            new Notice(t().notice.configureApiKey(provider?.name || this.selectedProviderId))
             return
         }
 
@@ -910,7 +938,7 @@ export class AnalysisModal extends Modal {
                 }
             }
 
-            const response = await this.aiService.sendRequest(messages, this.selectedProvider)
+            const response = await this.aiService.sendRequest(messages, this.selectedProviderId, this.selectedModelId)
 
             if (response.error) {
                 throw new Error(response.error)
@@ -934,17 +962,17 @@ export class AnalysisModal extends Modal {
      * 미리보기 모달 표시
      */
     private showPreviewModal(content: string, isRaw: boolean): void {
-        const model = this.plugin.settings.ai.models[this.selectedProvider] ||
-            AI_PROVIDERS[this.selectedProvider].defaultModel
+        const provider = this.aiService.getProvider(this.selectedProviderId)
+        const modelDef = this.aiService.getModel(this.selectedModelId)
 
         new PreviewModal(this.app, {
             content,
             isRaw,
-            provider: isRaw ? undefined : AI_PROVIDERS[this.selectedProvider].name,
-            model: isRaw ? undefined : model,
+            provider: isRaw ? undefined : (provider?.name || this.selectedProviderId),
+            model: isRaw ? undefined : (modelDef?.name || this.selectedModelId),
             onApply: async () => {
-                await this.createNote(content, isRaw, model)
-                new Notice(isRaw ? 'Content saved!' : 'Analysis complete! Note created.')
+                await this.createNote(content, isRaw, modelDef?.name || this.selectedModelId)
+                new Notice(isRaw ? t().notice.contentSaved : t().notice.analysisComplete)
                 this.close()
             },
             onRegenerate: () => {
@@ -995,7 +1023,7 @@ export class AnalysisModal extends Modal {
             source: this.options.url,
             date: new Date().toISOString(),
             template: templateName,
-            provider: isRaw ? '' : AI_PROVIDERS[this.selectedProvider].name,
+            provider: isRaw ? '' : (this.aiService.getProvider(this.selectedProviderId)?.name || this.selectedProviderId),
             model: isRaw ? '' : (model || ''),
             content: content,
             original: this.includeOriginal && !isRaw ? this.editableContent : '',
@@ -1026,7 +1054,7 @@ export class AnalysisModal extends Modal {
      */
     private async createNewNote(content: string, variables: Record<string, string>): Promise<void> {
         const { vault } = this.app
-        const notesFolder = this.plugin.settings.ai.notesFolder
+        const notesFolder = this.plugin.settings.aiGlobal.notesFolder
 
         const folderPath = notesFolder || 'Clippings'
         const folder = vault.getAbstractFileByPath(folderPath)
@@ -1041,7 +1069,7 @@ export class AnalysisModal extends Modal {
         const fileName = `${folderPath}/${sanitizedTitle} - ${timestamp}.md`
 
         const noteContent = this.renderNoteTemplate(
-            this.plugin.settings.ai.noteTemplate,
+            this.plugin.settings.aiGlobal.noteTemplate,
             variables
         )
 
@@ -1152,8 +1180,9 @@ export class AnalysisModal extends Modal {
             return
         }
 
-        if (!this.aiService.isProviderConfigured(this.selectedProvider)) {
-            new Notice(`Please configure API key for ${AI_PROVIDERS[this.selectedProvider].name} in settings`)
+        if (!this.aiService.isProviderConfigured(this.selectedProviderId)) {
+            const provider = this.aiService.getProvider(this.selectedProviderId)
+            new Notice(t().notice.configureApiKey(provider?.name || this.selectedProviderId))
             this.close()
             return
         }
@@ -1174,18 +1203,17 @@ export class AnalysisModal extends Modal {
                 { role: 'user', content: userPrompt }
             ]
 
-            const response = await this.aiService.sendRequest(messages, this.selectedProvider)
+            const response = await this.aiService.sendRequest(messages, this.selectedProviderId, this.selectedModelId)
 
             if (response.error) {
                 throw new Error(response.error)
             }
 
             // 바로 노트 생성
-            const model = this.plugin.settings.ai.models[this.selectedProvider] ||
-                AI_PROVIDERS[this.selectedProvider].defaultModel
-            await this.createNote(response.content, false, model)
+            const modelDef = this.aiService.getModel(this.selectedModelId)
+            await this.createNote(response.content, false, modelDef?.name || this.selectedModelId)
 
-            new Notice('Quick analysis complete! Note created.')
+            new Notice(t().notice.analysisComplete)
             this.close()
         } catch (error) {
             new Notice(`Quick analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)

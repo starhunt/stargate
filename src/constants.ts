@@ -2,6 +2,8 @@
  * Stargate Plugin Constants
  */
 
+import { AIProviderDefinition, AIModelDefinition } from './types'
+
 // ============================================
 // Plugin Info
 // ============================================
@@ -54,46 +56,74 @@ export const FAVICON_SERVICE_URL = 'https://www.google.com/s2/favicons?domain='
 export const DEFAULT_FAVICON = 'globe'
 
 // ============================================
-// AI Providers
+// AI Providers (v2 - 빌트인 프리셋)
 // ============================================
 
-export const AI_PROVIDERS = {
-    openai: {
+export const BUILT_IN_PROVIDERS: AIProviderDefinition[] = [
+    {
+        id: 'openai',
         name: 'OpenAI',
-        defaultModel: 'gpt-4o',
-        baseUrl: 'https://api.openai.com/v1/chat/completions'
+        baseUrl: 'https://api.openai.com/v1',
+        apiKey: '',
+        authType: 'bearer',
+        apiFormat: 'openai',
+        isBuiltIn: true,
     },
-    anthropic: {
+    {
+        id: 'anthropic',
         name: 'Anthropic',
-        defaultModel: 'claude-sonnet-4-20250514',
-        baseUrl: 'https://api.anthropic.com/v1/messages'
+        baseUrl: 'https://api.anthropic.com/v1',
+        apiKey: '',
+        authType: 'x-api-key',
+        apiFormat: 'anthropic',
+        isBuiltIn: true,
     },
-    gemini: {
+    {
+        id: 'gemini',
         name: 'Google Gemini',
-        defaultModel: 'gemini-2.0-flash',
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+        apiKey: '',
+        authType: 'query',
+        apiFormat: 'gemini',
+        isBuiltIn: true,
     },
-    groq: {
-        name: 'Groq',
-        defaultModel: 'llama-3.3-70b-versatile',
-        baseUrl: 'https://api.groq.com/openai/v1/chat/completions'
-    },
-    xai: {
+{
+        id: 'xai',
         name: 'xAI (Grok)',
-        defaultModel: 'grok-2-latest',
-        baseUrl: 'https://api.x.ai/v1/chat/completions'
+        baseUrl: 'https://api.x.ai/v1',
+        apiKey: '',
+        authType: 'bearer',
+        apiFormat: 'openai',
+        isBuiltIn: true,
     },
-    zai: {
+    {
+        id: 'zai',
         name: 'z.ai (GLM)',
-        defaultModel: 'glm-4-flash',
-        baseUrl: 'https://api.z.ai/api/coding/paas/v4/chat/completions'
+        baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+        apiKey: '',
+        authType: 'bearer',
+        apiFormat: 'openai',
+        isBuiltIn: true,
     },
-    ollama: {
+    {
+        id: 'ollama',
         name: 'Ollama (Local)',
-        defaultModel: 'llama3.2',
-        baseUrl: 'http://localhost:11434/api/chat'
-    }
-} as const
+        baseUrl: 'http://localhost:11434',
+        apiKey: '',
+        authType: 'none',
+        apiFormat: 'ollama',
+        isBuiltIn: true,
+    },
+]
+
+export const BUILT_IN_MODELS: AIModelDefinition[] = [
+    { id: 'gpt-4o', name: 'GPT-4o', providerId: 'openai', enabled: true },
+    { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', providerId: 'anthropic', enabled: true },
+    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', providerId: 'gemini', enabled: true },
+    { id: 'grok-2-latest', name: 'Grok 2', providerId: 'xai', enabled: true },
+    { id: 'glm-4-flash', name: 'GLM-4 Flash', providerId: 'zai', enabled: true },
+    { id: 'llama3.2', name: 'Llama 3.2', providerId: 'ollama', enabled: true },
+]
 
 // ============================================
 // Default URLs

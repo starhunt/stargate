@@ -1165,8 +1165,15 @@
    ============================================ */
 
 .stargate-edit-template-modal {
-    max-width: 700px;
+    max-width: 800px;
     width: 90vw;
+    overflow-x: hidden;
+}
+
+.stargate-edit-template-modal .modal-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 80vh;
 }
 
 .stargate-edit-template-modal h2 {
@@ -1195,6 +1202,9 @@
     resize: vertical;
     box-sizing: border-box;
     margin-top: 8px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
 }
 
 .stargate-template-textarea:focus {

@@ -1,21 +1,31 @@
 /**
- * AI 분석 템플릿 정의
+ * AI 분석 템플릿 정의 (i18n 지원)
  */
 
 import { AnalysisTemplate, CustomTemplate, TemplateType } from '../types'
+import { t } from '../i18n'
 
-export const ANALYSIS_TEMPLATES: AnalysisTemplate[] = [
-    {
-        id: 'briefing',
-        name: '브리핑',
-        icon: '📰',
-        description: '브리핑 문서, 뉴스, 리포트 내용을 빠르게 파악합니다.',
-        systemPrompt: `You are a briefing and summarization specialist.
+// 로케일별 템플릿 데이터 (name, description, systemPrompt, userPromptTemplate)
+interface TemplateLocaleData {
+    name: string
+    description: string
+    systemPrompt: string
+    userPromptTemplate: string
+}
+
+type TemplateLocaleMap = Record<string, Record<TemplateType, TemplateLocaleData>>
+
+const TEMPLATE_LOCALE_DATA: TemplateLocaleMap = {
+    ko: {
+        briefing: {
+            name: '브리핑',
+            description: '브리핑 문서, 뉴스, 리포트 내용을 빠르게 파악합니다.',
+            systemPrompt: `You are a briefing and summarization specialist.
 Focus on clarity, context, and fast understanding.
-Extract 핵심 메시지, 배경, 의미를 구조적으로 정리하세요.
+핵심 메시지, 배경, 의미를 구조적으로 정리하세요.
 Use the Feynman Technique to ensure explainability.
 Avoid unnecessary details and emotional language.`,
-        userPromptTemplate: `다음 내용을 브리핑 노트 형식으로 정리해주세요.
+            userPromptTemplate: `다음 내용을 브리핑 노트 형식으로 정리해주세요.
 
 ## 브리핑 노트 구성
 1. 🎯 핵심 내용 요약 (5~7줄)
@@ -30,18 +40,16 @@ Avoid unnecessary details and emotional language.`,
 
 ## 내용
 {{content}}`
-    },
-    {
-        id: 'concept',
-        name: '개념정리',
-        icon: '📘',
-        description: '이론·개념 중심의 기준 지식을 정리합니다.',
-        systemPrompt: `You are a conceptual knowledge architect.
+        },
+        concept: {
+            name: '개념정리',
+            description: '이론·개념 중심의 기준 지식을 정리합니다.',
+            systemPrompt: `You are a conceptual knowledge architect.
 Define concepts clearly and explain their internal structure.
 Highlight relationships between concepts.
 Use the Feynman Technique to simplify without losing accuracy.
 Prioritize precision over breadth.`,
-        userPromptTemplate: `다음 내용을 개념 노트 형식으로 정리해주세요.
+            userPromptTemplate: `다음 내용을 개념 노트 형식으로 정리해주세요.
 
 ## 개념 노트 구성
 1. 🔑 핵심 개념 정의
@@ -56,17 +64,15 @@ Prioritize precision over breadth.`,
 
 ## 내용
 {{content}}`
-    },
-    {
-        id: 'insight',
-        name: '인사이트',
-        icon: '💡',
-        description: '정보를 넘어 사고를 확장합니다.',
-        systemPrompt: `You are an insight generation facilitator.
+        },
+        insight: {
+            name: '인사이트',
+            description: '정보를 넘어 사고를 확장합니다.',
+            systemPrompt: `You are an insight generation facilitator.
 Go beyond surface information to extract meaning.
 Encourage new perspectives and connections.
 Focus on implications, patterns, and thinking expansion.`,
-        userPromptTemplate: `다음 내용을 인사이트 노트로 확장해주세요.
+            userPromptTemplate: `다음 내용을 인사이트 노트로 확장해주세요.
 
 ## 인사이트 노트 구성
 1. 🎯 핵심 인사이트
@@ -77,17 +83,15 @@ Focus on implications, patterns, and thinking expansion.`,
 
 ## 내용
 {{content}}`
-    },
-    {
-        id: 'knowledge-map',
-        name: '지식맵',
-        icon: '🗺️',
-        description: '지식을 구조적으로 배치합니다.',
-        systemPrompt: `You are a knowledge mapping specialist.
+        },
+        'knowledge-map': {
+            name: '지식맵',
+            description: '지식을 구조적으로 배치합니다.',
+            systemPrompt: `You are a knowledge mapping specialist.
 Organize information spatially and structurally.
 Focus on hierarchy, sequence, and relationships.
 Prepare content suitable for mind maps or diagrams.`,
-        userPromptTemplate: `다음 내용을 지식맵 노트로 구조화해주세요.
+            userPromptTemplate: `다음 내용을 지식맵 노트로 구조화해주세요.
 
 ## 지식맵 노트 구성
 1. 🧠 중심 주제
@@ -98,17 +102,15 @@ Prepare content suitable for mind maps or diagrams.`,
 
 ## 내용
 {{content}}`
-    },
-    {
-        id: 'deep-analysis',
-        name: '심층분석',
-        icon: '🔬',
-        description: '조사, 비교, 문제 해결을 위한 분석 노트입니다.',
-        systemPrompt: `You are an analytical research assistant.
+        },
+        'deep-analysis': {
+            name: '심층분석',
+            description: '조사, 비교, 문제 해결을 위한 분석 노트입니다.',
+            systemPrompt: `You are an analytical research assistant.
 Break down problems systematically.
 Compare options, identify causes, and evaluate outcomes.
 Present structured and evidence-based analysis.`,
-        userPromptTemplate: `다음 내용을 심층분석 노트로 정리해주세요.
+            userPromptTemplate: `다음 내용을 심층분석 노트로 정리해주세요.
 
 ## 심층분석 노트 구성
 1. 🎯 분석 대상 및 문제 정의
@@ -119,17 +121,15 @@ Present structured and evidence-based analysis.`,
 
 ## 내용
 {{content}}`
-    },
-    {
-        id: 'meta-hub',
-        name: '메타허브',
-        icon: '🧠',
-        description: '지식을 연결하고 관리하는 메타 노트입니다.',
-        systemPrompt: `You are a meta-knowledge organizer.
+        },
+        'meta-hub': {
+            name: '메타허브',
+            description: '지식을 연결하고 관리하는 메타 노트입니다.',
+            systemPrompt: `You are a meta-knowledge organizer.
 Create structure across multiple notes.
 Identify categories, links, and navigation paths.
 Design content suitable for MOC (Map of Content).`,
-        userPromptTemplate: `다음 내용을 메타허브(MOC) 노트로 정리해주세요.
+            userPromptTemplate: `다음 내용을 메타허브(MOC) 노트로 정리해주세요.
 
 ## 메타허브 노트 구성
 1. 🧠 핵심 주제 요약
@@ -140,19 +140,17 @@ Design content suitable for MOC (Map of Content).`,
 
 ## 내용
 {{content}}`
-    },
-    {
-        id: 'comprehensive',
-        name: '종합분석',
-        icon: '🎯',
-        description: '브리핑, 개념, 인사이트 분석을 종합합니다.',
-        systemPrompt: `You are a senior knowledge synthesizer and systems-thinking analyst.
+        },
+        comprehensive: {
+            name: '종합분석',
+            description: '브리핑, 개념, 인사이트 분석을 종합합니다.',
+            systemPrompt: `You are a senior knowledge synthesizer and systems-thinking analyst.
 Integrate multiple perspectives into a coherent whole.
 Combine summary, conceptual structure, insights, analysis, and meta-organization.
 Focus on relationships, patterns, trade-offs, and overarching conclusions.
 Think in terms of systems, not isolated facts.
 Produce a clear, structured, and navigable synthesis.`,
-        userPromptTemplate: `다음 내용을 종합분석 노트 형식으로 정리해주세요.
+            userPromptTemplate: `다음 내용을 종합분석 노트 형식으로 정리해주세요.
 (브리핑·개념·인사이트·분석·지식맵·메타 관점을 통합하는 상위 노트입니다)
 
 ## 종합분석 노트 구성
@@ -194,21 +192,244 @@ Produce a clear, structured, and navigable synthesis.`,
 
 ## 내용
 {{content}}`
+        }
+    },
+    en: {
+        briefing: {
+            name: 'Briefing',
+            description: 'Quickly grasp briefing documents, news, and reports.',
+            systemPrompt: `You are a briefing and summarization specialist.
+Focus on clarity, context, and fast understanding.
+Extract key messages, background, and implications in a structured manner.
+Use the Feynman Technique to ensure explainability.
+Avoid unnecessary details and emotional language.`,
+            userPromptTemplate: `Please organize the following content into a briefing note format.
+
+## Briefing Note Structure
+1. 🎯 Executive Summary (5-7 lines)
+2. 📌 Key Points
+   - Background
+   - Core Content
+   - Implications
+3. 🧠 Feynman Technique Explanation
+   - Simple explanation
+   - Analogy or example
+4. ❓ 2-3 Key Questions
+
+## Content
+{{content}}`
+        },
+        concept: {
+            name: 'Concept',
+            description: 'Organize theory and concept-based foundational knowledge.',
+            systemPrompt: `You are a conceptual knowledge architect.
+Define concepts clearly and explain their internal structure.
+Highlight relationships between concepts.
+Use the Feynman Technique to simplify without losing accuracy.
+Prioritize precision over breadth.`,
+            userPromptTemplate: `Please organize the following content into a concept note format.
+
+## Concept Note Structure
+1. 🔑 Core Concept Definition
+2. 🧩 Concept Structure
+   - Components
+   - Operating principles or logical flow
+3. 🔗 Related Concepts & Comparisons
+4. 🧠 Feynman Technique Explanation
+   - Simple explanation
+   - Common misconceptions
+5. 📌 Summary
+
+## Content
+{{content}}`
+        },
+        insight: {
+            name: 'Insight',
+            description: 'Expand thinking beyond surface information.',
+            systemPrompt: `You are an insight generation facilitator.
+Go beyond surface information to extract meaning.
+Encourage new perspectives and connections.
+Focus on implications, patterns, and thinking expansion.`,
+            userPromptTemplate: `Please expand the following content into an insight note.
+
+## Insight Note Structure
+1. 🎯 Key Insights
+2. 🔍 Hidden Meanings or Patterns
+3. 🔗 Connected Concepts / Fields
+4. 🚀 Expansion Ideas
+5. ❓ 2-3 Thought-Expanding Questions
+
+## Content
+{{content}}`
+        },
+        'knowledge-map': {
+            name: 'Knowledge Map',
+            description: 'Arrange knowledge structurally and spatially.',
+            systemPrompt: `You are a knowledge mapping specialist.
+Organize information spatially and structurally.
+Focus on hierarchy, sequence, and relationships.
+Prepare content suitable for mind maps or diagrams.`,
+            userPromptTemplate: `Please structure the following content into a knowledge map note.
+
+## Knowledge Map Note Structure
+1. 🧠 Central Topic
+2. 🌿 Sub-concept Tree
+3. ⏱️ Timeline or Flow (if applicable)
+4. 🔗 Relationships Between Concepts
+5. 📌 Structure Summary
+
+## Content
+{{content}}`
+        },
+        'deep-analysis': {
+            name: 'Deep Analysis',
+            description: 'Analysis notes for research, comparison, and problem-solving.',
+            systemPrompt: `You are an analytical research assistant.
+Break down problems systematically.
+Compare options, identify causes, and evaluate outcomes.
+Present structured and evidence-based analysis.`,
+            userPromptTemplate: `Please organize the following content into a deep analysis note.
+
+## Deep Analysis Note Structure
+1. 🎯 Subject & Problem Definition
+2. 🔍 Key Issue Analysis
+3. ⚖️ Comparison or Alternative Evaluation
+4. 📊 Evidence & Logical Reasoning
+5. 🧠 Conclusions & Implications
+
+## Content
+{{content}}`
+        },
+        'meta-hub': {
+            name: 'Meta Hub',
+            description: 'Meta notes for connecting and managing knowledge.',
+            systemPrompt: `You are a meta-knowledge organizer.
+Create structure across multiple notes.
+Identify categories, links, and navigation paths.
+Design content suitable for MOC (Map of Content).`,
+            userPromptTemplate: `Please organize the following content into a Meta Hub (MOC) note.
+
+## Meta Hub Note Structure
+1. 🧠 Core Topic Summary
+2. 🗂️ Sub-note Classification
+3. 🔗 Connection Structure (link relationships)
+4. 🧭 Navigation Guide
+5. 📌 Overall Structure Summary
+
+## Content
+{{content}}`
+        },
+        comprehensive: {
+            name: 'Comprehensive',
+            description: 'Synthesizes briefing, concept, and insight analyses.',
+            systemPrompt: `You are a senior knowledge synthesizer and systems-thinking analyst.
+Integrate multiple perspectives into a coherent whole.
+Combine summary, conceptual structure, insights, analysis, and meta-organization.
+Focus on relationships, patterns, trade-offs, and overarching conclusions.
+Think in terms of systems, not isolated facts.
+Produce a clear, structured, and navigable synthesis.`,
+            userPromptTemplate: `Please organize the following content into a comprehensive analysis note.
+(This is a higher-level note integrating briefing, concept, insight, analysis, knowledge map, and meta perspectives)
+
+## Comprehensive Analysis Note Structure
+
+1. 🎯 Executive Overview
+- Summarize the topic in one paragraph
+- Clearly state why it matters and the scope covered
+
+2. 🧾 Consolidated Content Summary
+- Organize key facts, claims, and information from a briefing perspective
+- Focus on the big picture rather than details
+
+3. 📘 Core Concept Structure
+- Key concepts that compose this topic
+- Explain relationships, hierarchies, and contrasts between concepts
+
+4. 💡 Integrated Key Insights
+- Higher-level insights derived from combining individual insights
+- Recurring patterns, hidden assumptions, shifts in perspective
+
+5. 🗺️ Knowledge Structure Map (text-based)
+- Central concept → sub-areas → detailed topic structure
+- Include timelines, flows, and cause-effect relationships if applicable
+
+6. 🔬 Deep Analysis Summary
+- Key issues or problems
+- Options/alternatives/trade-offs
+- Limitations and risks
+
+7. 🧠 Meta Perspective
+- Position of this topic within the broader knowledge system
+- Connection points to other notes/fields
+- Future expansion directions
+
+8. 🚀 Conclusions & Application
+- Comprehensive conclusions at this point
+- Application suggestions for learning, practice, and thinking expansion
+- Suggested notes to create or connect next
+
+## Content
+{{content}}`
+        }
     }
+}
+
+// 템플릿 아이콘 (로케일 불변)
+const TEMPLATE_ICONS: Record<TemplateType, string> = {
+    briefing: '📰',
+    concept: '📘',
+    insight: '💡',
+    'knowledge-map': '🗺️',
+    'deep-analysis': '🔬',
+    'meta-hub': '🧠',
+    comprehensive: '🎯',
+}
+
+// 템플릿 ID 순서
+const TEMPLATE_IDS: TemplateType[] = [
+    'briefing', 'concept', 'insight', 'knowledge-map',
+    'deep-analysis', 'meta-hub', 'comprehensive'
 ]
+
+/**
+ * 현재 로케일에 맞는 템플릿 목록 반환
+ */
+function getLocaleKey(): string {
+    // t() 호출로 현재 로케일 추론 (en 번역의 고유 값으로 판별)
+    return t().common.save === 'Save' ? 'en' : 'ko'
+}
+
+/**
+ * 현재 로케일의 분석 템플릿 반환
+ */
+export function getAnalysisTemplates(): AnalysisTemplate[] {
+    const locale = getLocaleKey()
+    const data = TEMPLATE_LOCALE_DATA[locale] || TEMPLATE_LOCALE_DATA['ko']
+
+    return TEMPLATE_IDS.map(id => ({
+        id,
+        icon: TEMPLATE_ICONS[id],
+        ...data[id],
+    }))
+}
+
+/**
+ * 하위 호환용 - 현재 로케일 기반 (기존 ANALYSIS_TEMPLATES 참조처 호환)
+ */
+export const ANALYSIS_TEMPLATES: AnalysisTemplate[] = getAnalysisTemplates()
 
 /**
  * 템플릿 ID로 기본 템플릿 찾기
  */
 export function getTemplateById(id: string): AnalysisTemplate | undefined {
-    return ANALYSIS_TEMPLATES.find((t) => t.id === id)
+    return getAnalysisTemplates().find((t) => t.id === id)
 }
 
 /**
  * 기본 템플릿의 복사본 가져오기 (수정용)
  */
 export function getDefaultTemplateById(id: TemplateType): AnalysisTemplate | undefined {
-    const template = ANALYSIS_TEMPLATES.find((t) => t.id === id)
+    const template = getAnalysisTemplates().find((t) => t.id === id)
     if (template) {
         return { ...template }
     }
