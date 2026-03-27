@@ -1,6 +1,6 @@
 {
   "name": "stargate",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Web clipper with multi-tab browser and AI analysis for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -8,7 +8,12 @@
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json"
   },
-  "keywords": ["obsidian", "plugin", "web-clipper", "ai"],
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "web-clipper",
+    "ai"
+  ],
   "author": "starhunter",
   "license": "MIT",
   "devDependencies": {
