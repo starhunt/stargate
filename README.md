@@ -125,3 +125,11 @@ MIT License
 ## 문의
 
 이슈나 제안사항은 [GitHub Issues](https://github.com/starhunt/stargate/issues)에 등록해주세요.
+
+## Privacy and network use
+
+Star Gate can load web pages that you open in its embedded browser. Any AI analysis or external web content retrieval depends on the websites and services you choose to use; no telemetry is collected by this plugin.
+
+## License
+
+MIT License. See [LICENSE](./LICENSE).

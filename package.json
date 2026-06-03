@@ -1,7 +1,7 @@
 {
   "name": "stargate",
-  "version": "0.1.5",
-  "description": "Web clipper with multi-tab browser and AI analysis for Obsidian",
+  "version": "0.1.6",
+  "description": "Clip web pages into Obsidian with a multi-tab browser, AI analysis templates, and content capture.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

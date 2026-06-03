@@ -18,7 +18,6 @@ export default class StargatePlugin extends Plugin {
     aiService!: AIService
 
     async onload() {
-        console.log('Loading Stargate plugin')
 
         await this.loadSettings()
 
@@ -143,7 +142,6 @@ export default class StargatePlugin extends Plugin {
     }
 
     onunload() {
-        console.log('Unloading Stargate plugin')
     }
 
     /**
@@ -218,7 +216,6 @@ export default class StargatePlugin extends Plugin {
      * v1 → v2 설정 마이그레이션
      */
     private migrateV1ToV2(v1Data: Record<string, unknown>): PluginSettings {
-        console.log('[Stargate] Migrating settings v1 → v2')
 
         const v1Ai = (v1Data.ai || {}) as Partial<AISettingsV1>
         const v1ApiKeys = v1Ai.apiKeys || {}

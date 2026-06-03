@@ -90,7 +90,6 @@ export class AIService {
         }
 
         const effectiveKey = overrideApiKey || provider.apiKey
-        console.log(`[Stargate] testConnection - Provider: ${provider.name} (${provider.id}), Model: ${modelId}, Format: ${provider.apiFormat}, BaseUrl: ${provider.baseUrl}, AuthType: ${provider.authType}, HasKey: ${!!effectiveKey}`)
 
         try {
             const messages: AIMessage[] = [
@@ -143,7 +142,6 @@ export class AIService {
         }
 
         try {
-            console.log(`[Stargate] API Call - Provider: ${provider.name}, Model: ${effectiveModelId}, Format: ${provider.apiFormat}`)
             return await this.callProvider(provider, effectiveModelId, messages, effectiveKey)
         } catch (error) {
             return {
