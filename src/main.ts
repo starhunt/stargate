@@ -68,10 +68,9 @@ export default class StargatePlugin extends Plugin {
      * i18n 초기화
      */
     private initI18n(): void {
-        // 언어 감지: Obsidian locale → localStorage → moment locale → 'en' 순
+        // 언어 감지: app locale → moment locale → 'en' 순
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const obsidianLocale = (this.app as any).locale
-            || window.localStorage.getItem('language')
             || (window as any).moment?.locale()
             || 'en'
         setDetectedLocale(obsidianLocale)

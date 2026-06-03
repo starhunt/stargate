@@ -2,6 +2,25 @@
 
 Obsidian용 웹 클리퍼 플러그인 - 멀티탭 브라우저와 AI 분석 기능을 제공합니다.
 
+## Installation
+
+### From Community Plugins
+1. Open Settings → Community plugins.
+2. Search for **Star Gate**.
+3. Install and enable the plugin.
+
+### Manual installation
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest GitHub release.
+2. Copy them into `<vault>/.obsidian/plugins/stargate/`.
+3. Restart the app and enable **Star Gate** in Community plugins.
+
+## Usage
+
+1. Click the globe ribbon icon or run **Star Gate: Open Browser** from the command palette.
+2. Open a web page in the multi-tab browser.
+3. Use **AI Analysis** to summarize or transform captured content, or use **Quick Save** to save raw page content.
+4. Configure providers, API keys, pinned sites, and templates in the plugin settings.
+
 ## 주요 기능
 
 ### 멀티탭 브라우저
