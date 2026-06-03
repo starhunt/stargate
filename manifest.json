@@ -1,7 +1,7 @@
 {
   "id": "stargate",
   "name": "Star Gate",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "minAppVersion": "0.15.0",
   "description": "Clip web pages with a multi-tab browser, AI analysis templates, and content capture.",
   "author": "starhunter",
