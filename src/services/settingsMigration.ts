@@ -7,7 +7,7 @@ import { AIModelDefinition, DeprecatedModelMigration } from '../types'
 export interface DeprecatedModelMigrationResult {
     models: AIModelDefinition[]
     defaultModelId: string
-    /** 실제로 교체된 항목 (로그용) */
+    /** 실제로 교체된 항목 (교체 발생 여부 판정용) */
     changes: { from: string; to: string }[]
 }
 

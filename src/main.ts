@@ -325,10 +325,6 @@ export default class StargatePlugin extends Plugin {
             DEPRECATED_MODEL_MIGRATIONS,
         )
 
-        for (const change of result.changes) {
-            console.log(`[Stargate] Deprecated model migrated: ${change.from} → ${change.to}`)
-        }
-
         this.settings.models = result.models
         this.settings.defaultModelId = result.defaultModelId
     }
