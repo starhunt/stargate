@@ -1,13 +1,17 @@
 import { Plugin, WorkspaceLeaf } from 'obsidian'
 import {
-    PluginSettings, DEFAULT_SETTINGS, DEFAULT_AI_GLOBAL_SETTINGS,
+    PluginSettings, DEFAULT_SETTINGS, DEFAULT_AI_GLOBAL_SETTINGS, SETTINGS_VERSION,
     PinnedSite, TempTab, SavedPrompt,
     AIProviderDefinition, AIModelDefinition, AISettingsV1, AIProviderType,
 } from './types'
-import { PLUGIN_ID, VIEW_TYPE_BROWSER, DEFAULT_PROFILE_KEY, BUILT_IN_PROVIDERS, BUILT_IN_MODELS } from './constants'
+import {
+    PLUGIN_ID, VIEW_TYPE_BROWSER, DEFAULT_PROFILE_KEY,
+    BUILT_IN_PROVIDERS, BUILT_IN_MODELS, DEPRECATED_MODEL_MIGRATIONS,
+} from './constants'
 import { BrowserView } from './views/BrowserView'
 import { StargateSettingTab } from './SettingTab'
 import { AIService } from './services/AIService'
+import { migrateDeprecatedModels } from './services/settingsMigration'
 import { setLocale, setDetectedLocale, SupportedLocale } from './i18n'
 
 // Type export for commands
@@ -171,6 +175,7 @@ export default class StargatePlugin extends Plugin {
      */
     async loadSettings(): Promise<void> {
         const loadedData = await this.loadData()
+        const loadedVersion = (loadedData?.settingsVersion as number) || 0
 
         if (!loadedData) {
             // 첫 실행: 기본 설정 + 빌트인 프리셋
@@ -179,11 +184,11 @@ export default class StargatePlugin extends Plugin {
                 providers: BUILT_IN_PROVIDERS.map(p => ({ ...p })),
                 models: BUILT_IN_MODELS.map(m => ({ ...m })),
             }
-        } else if (!loadedData.settingsVersion || loadedData.settingsVersion < 2) {
+        } else if (loadedVersion < 2) {
             // v1 → v2 마이그레이션
             this.settings = this.migrateV1ToV2(loadedData)
         } else {
-            // v2 설정 로드
+            // v2+ 설정 로드
             this.settings = {
                 ...DEFAULT_SETTINGS,
                 ...loadedData,
@@ -192,15 +197,30 @@ export default class StargatePlugin extends Plugin {
                     ...(loadedData.aiGlobal || {}),
                 },
             }
+        }
 
-            // 빌트인 프로바이더 동기화 (새 프리셋 추가 대응)
+        // v3 미만 설정: 서비스 종료 모델 강제 교체 (1회)
+        if (loadedData && loadedVersion < 3) {
+            this.applyDeprecatedModelMigrations()
+        }
+
+        if (loadedData) {
+            // 빌트인 프로바이더/모델 동기화 (새 프리셋 추가 대응)
             this.syncBuiltInProviders()
             this.syncBuiltInModels()
         }
 
+        // 스키마 버전 갱신 (마이그레이션이 돌았다면 결과를 즉시 영속화)
+        const migrated = !!loadedData && loadedVersion !== SETTINGS_VERSION
+        this.settings.settingsVersion = SETTINGS_VERSION
+
         // UUID 생성 (최초 실행 시)
-        if (!this.settings.uuid) {
+        const uuidCreated = !this.settings.uuid
+        if (uuidCreated) {
             this.settings.uuid = this.generateUUID()
+        }
+
+        if (migrated || uuidCreated) {
             await this.saveSettings()
         }
 
@@ -252,10 +272,10 @@ export default class StargatePlugin extends Plugin {
         const defaultProviderId = v1Provider
         const defaultModelId = v1Models[v1Provider as AIProviderType] ||
             BUILT_IN_MODELS.find(m => m.providerId === v1Provider)?.id ||
-            'gpt-4o'
+            'gpt-5.6-luna'
 
         return {
-            settingsVersion: 2,
+            settingsVersion: SETTINGS_VERSION,
             uuid: (v1Data.uuid as string) || '',
             language: 'auto',
             pinnedSites: (v1Data.pinnedSites as PinnedSite[]) || [],
@@ -289,6 +309,28 @@ export default class StargatePlugin extends Plugin {
                 this.settings.providers.push({ ...builtIn })
             }
         }
+    }
+
+    /**
+     * 서비스 종료 모델 강제 교체 (v2 → v3)
+     *
+     * 이미 API가 응답하지 않는 모델 ID를 사용자 설정에 남겨두면 AI 호출이 그대로 실패한다.
+     * DEPRECATED_MODEL_MIGRATIONS 규칙에 맞는 모델을 대체 모델로 바꾸고,
+     * 기본 모델이 종료된 모델이었다면 함께 옮긴다.
+     */
+    private applyDeprecatedModelMigrations(): void {
+        const result = migrateDeprecatedModels(
+            this.settings.models,
+            this.settings.defaultModelId,
+            DEPRECATED_MODEL_MIGRATIONS,
+        )
+
+        for (const change of result.changes) {
+            console.log(`[Stargate] Deprecated model migrated: ${change.from} → ${change.to}`)
+        }
+
+        this.settings.models = result.models
+        this.settings.defaultModelId = result.defaultModelId
     }
 
     /**
