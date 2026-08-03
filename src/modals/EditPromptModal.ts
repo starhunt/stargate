@@ -3,7 +3,7 @@ import { SavedPrompt } from '../types'
 
 interface EditPromptModalOptions {
     prompt?: SavedPrompt  // 편집 시 기존 프롬프트 정보
-    onSubmit: (name: string, prompt: string, systemPrompt?: string, icon?: string) => void
+    onSubmit: (name: string, prompt: string, systemPrompt?: string, icon?: string) => void | Promise<void>
 }
 
 export class EditPromptModal extends Modal {
@@ -72,7 +72,7 @@ export class EditPromptModal extends Modal {
                     .onChange((value) => {
                         this.icon = value
                     })
-                text.inputEl.style.width = '60px'
+                text.inputEl.addClass('stargate-input-short')
             })
 
         // 시스템 프롬프트
@@ -185,14 +185,14 @@ export class EditPromptModal extends Modal {
                 new Notice('User prompt must include {{content}} placeholder')
                 return
             }
-            this.options.onSubmit(
+            void this.options.onSubmit(
                 this.name.trim(),
                 this.promptText.trim(),
                 this.systemPromptText.trim(),
                 this.icon.trim() || '⭐'
             )
         } else {
-            this.options.onSubmit(this.name.trim(), this.promptText.trim())
+            void this.options.onSubmit(this.name.trim(), this.promptText.trim())
         }
         this.close()
     }

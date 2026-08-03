@@ -1,11 +1,12 @@
 import { App, PluginSettingTab, Setting, Notice, Platform } from 'obsidian'
 import StargatePlugin from './main'
-import { PinnedSite, DEFAULT_NOTE_TEMPLATE, TemplateType, CustomTemplate, AIProviderDefinition, AIModelDefinition } from './types'
+import { PinnedSite, DEFAULT_NOTE_TEMPLATE, TemplateType } from './types'
 import { EditSiteModal } from './modals/EditSiteModal'
 import { EditPromptModal } from './modals/EditPromptModal'
 import { EditTemplateModal } from './modals/EditTemplateModal'
 import { AddProviderModal } from './modals/AddProviderModal'
 import { AddModelModal } from './modals/AddModelModal'
+import { ConfirmModal } from './modals/ConfirmModal'
 import { getAnalysisTemplates, getTemplateById, getEffectiveTemplate } from './ai/templates'
 import { t, setLocale, SupportedLocale } from './i18n'
 
@@ -21,7 +22,7 @@ export class StargateSettingTab extends PluginSettingTab {
         const { containerEl } = this
         containerEl.empty()
 
-        containerEl.createEl('h1', { text: t().settings.title })
+        new Setting(containerEl).setName(t().settings.title).setHeading()
 
         // ── 언어 설정 ──
         this.displayLanguageSection(containerEl)
@@ -66,7 +67,7 @@ export class StargateSettingTab extends PluginSettingTab {
      * 고정 사이트 섹션
      */
     private displayPinnedSitesSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h2', { text: t().settings.browserSettings })
+        new Setting(containerEl).setName(t().settings.browserSettings).setHeading()
 
         // 세션 공유 설정
         new Setting(containerEl)
@@ -81,7 +82,7 @@ export class StargateSettingTab extends PluginSettingTab {
                 })
             })
 
-        containerEl.createEl('h3', { text: t().settings.pinnedSites })
+        new Setting(containerEl).setName(t().settings.pinnedSites).setHeading()
         containerEl.createEl('p', {
             text: t().settings.pinnedSitesDesc,
             cls: 'setting-item-description'
@@ -114,11 +115,11 @@ export class StargateSettingTab extends PluginSettingTab {
                 button
                     .setButtonText(t().common.delete)
                     .setWarning()
-                    .onClick(async () => {
-                        if (confirm(t().notice.deleteConfirm(site.name))) {
+                    .onClick(() => {
+                        ConfirmModal.open(this.app, t().notice.deleteConfirm(site.name), async () => {
                             await this.plugin.removePinnedSite(site.id)
                             this.display()
-                        }
+                        })
                     })
             })
     }
@@ -152,7 +153,7 @@ export class StargateSettingTab extends PluginSettingTab {
      * AI 설정 섹션 (v2 - 동적 제공자/모델)
      */
     private displayAISettingsSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h2', { text: t().settings.aiSettings })
+        new Setting(containerEl).setName(t().settings.aiSettings).setHeading()
 
         const { providers, models, defaultProviderId, defaultModelId } = this.plugin.settings
 
@@ -218,18 +219,18 @@ export class StargateSettingTab extends PluginSettingTab {
                             )
                             new Notice(ok ? t().notice.connectionSuccess : t().notice.connectionFailed)
                             button.setButtonText(ok ? t().common.success : t().common.failure)
-                        } catch (e) {
+                        } catch {
                             new Notice(t().notice.connectionFailed)
                             button.setButtonText(t().common.failure)
                         }
                         button.setDisabled(false)
-                        setTimeout(() => button.setButtonText(t().common.test), 3000)
+                        window.setTimeout(() => { button.setButtonText(t().common.test) }, 3000)
                     })
                 })
         }
 
         // ── 제공자 관리 ──
-        containerEl.createEl('h3', { text: t().settings.providerManagement })
+        new Setting(containerEl).setName(t().settings.providerManagement).setHeading()
 
         const providersContainer = containerEl.createDiv({ cls: 'providers-container' })
 
@@ -261,12 +262,12 @@ export class StargateSettingTab extends PluginSettingTab {
 
             if (!provider.isBuiltIn) {
                 setting.addButton(button => {
-                    button.setIcon('trash').setWarning().setTooltip(t().common.delete).onClick(async () => {
-                        if (confirm(t().notice.deleteConfirm(provider.name))) {
+                    button.setIcon('trash').setWarning().setTooltip(t().common.delete).onClick(() => {
+                        ConfirmModal.open(this.app, t().notice.deleteConfirm(provider.name), async () => {
                             await this.plugin.removeProvider(provider.id)
                             new Notice(t().notice.providerDeleted(provider.name))
                             this.display()
-                        }
+                        })
                     })
                 })
             }
@@ -288,7 +289,7 @@ export class StargateSettingTab extends PluginSettingTab {
         })
 
         // ── 모델 관리 ──
-        containerEl.createEl('h3', { text: t().settings.modelManagement })
+        new Setting(containerEl).setName(t().settings.modelManagement).setHeading()
 
         const modelsContainer = containerEl.createDiv({ cls: 'models-container' })
 
@@ -341,12 +342,12 @@ export class StargateSettingTab extends PluginSettingTab {
             })
 
             setting.addButton(button => {
-                button.setIcon('trash').setWarning().setTooltip(t().common.delete).onClick(async () => {
-                    if (confirm(t().notice.deleteConfirm(model.name))) {
+                button.setIcon('trash').setWarning().setTooltip(t().common.delete).onClick(() => {
+                    ConfirmModal.open(this.app, t().notice.deleteConfirm(model.name), async () => {
                         await this.plugin.removeModel(model.id)
                         new Notice(t().notice.modelDeleted(model.name))
                         this.display()
-                    }
+                    })
                 })
             })
         }
@@ -370,7 +371,7 @@ export class StargateSettingTab extends PluginSettingTab {
         })
 
         // ── 글로벌 AI 설정 ──
-        containerEl.createEl('h3', { text: t().settings.aiSettings })
+        new Setting(containerEl).setName(t().settings.aiSettings).setHeading()
 
         // Max Tokens
         new Setting(containerEl)
@@ -443,29 +444,38 @@ export class StargateSettingTab extends PluginSettingTab {
      * 노트 템플릿 섹션
      */
     private displayNoteTemplateSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h3', { text: t().settings.noteTemplate })
+        new Setting(containerEl).setName(t().settings.noteTemplate).setHeading()
 
         const descEl = containerEl.createDiv({ cls: 'setting-item-description stargate-template-help' })
-        descEl.innerHTML = `
-            <p>${t().settings.templateVariables}:</p>
-            <ul>
-                <li><code>{{title}}</code> - Note title</li>
-                <li><code>{{source}}</code> - Source URL</li>
-                <li><code>{{date}}</code> - Creation date (ISO format)</li>
-                <li><code>{{template}}</code> - Analysis template name</li>
-                <li><code>{{provider}}</code> - AI provider used</li>
-                <li><code>{{model}}</code> - AI model used</li>
-                <li><code>{{content}}</code> - Analysis result</li>
-                <li><code>{{original}}</code> - Original content (if included)</li>
-            </ul>
-            <p><strong>YouTube variables:</strong></p>
-            <ul>
-                <li><code>{{channel}}</code> - Channel name</li>
-                <li><code>{{duration}}</code> - Video duration</li>
-                <li><code>{{videoType}}</code> - Video type</li>
-                <li><code>{{videoTags}}</code> - Video tags</li>
-            </ul>
-        `
+
+        const appendVariableList = (variables: [string, string][]): void => {
+            const listEl = descEl.createEl('ul')
+            for (const [name, description] of variables) {
+                const itemEl = listEl.createEl('li')
+                itemEl.createEl('code', { text: name })
+                itemEl.appendText(` - ${description}`)
+            }
+        }
+
+        descEl.createEl('p', { text: `${t().settings.templateVariables}:` })
+        appendVariableList([
+            ['{{title}}', 'Note title'],
+            ['{{source}}', 'Source URL'],
+            ['{{date}}', 'Creation date (ISO format)'],
+            ['{{template}}', 'Analysis template name'],
+            ['{{provider}}', 'AI provider used'],
+            ['{{model}}', 'AI model used'],
+            ['{{content}}', 'Analysis result'],
+            ['{{original}}', 'Original content (if included)'],
+        ])
+
+        descEl.createEl('p').createEl('strong', { text: 'YouTube variables:' })
+        appendVariableList([
+            ['{{channel}}', 'Channel name'],
+            ['{{duration}}', 'Video duration'],
+            ['{{videoType}}', 'Video type'],
+            ['{{videoTags}}', 'Video tags'],
+        ])
 
         new Setting(containerEl)
             .setName(t().settings.noteTemplateDesc)
@@ -475,22 +485,23 @@ export class StargateSettingTab extends PluginSettingTab {
         })
         textareaEl.value = this.plugin.settings.aiGlobal.noteTemplate || DEFAULT_NOTE_TEMPLATE
         textareaEl.rows = 15
-        textareaEl.addEventListener('change', async (e) => {
+        textareaEl.addEventListener('change', (e) => {
             this.plugin.settings.aiGlobal.noteTemplate = (e.target as HTMLTextAreaElement).value
-            await this.plugin.saveSettings()
-            new Notice(t().notice.templateSaved)
+            void this.plugin.saveSettings().then(() => {
+                new Notice(t().notice.templateSaved)
+            })
         })
 
         new Setting(containerEl)
             .setName('')
             .addButton((button) => {
-                button.setButtonText(t().settings.resetToDefault).onClick(async () => {
-                    if (confirm(t().notice.resetTemplateConfirm)) {
+                button.setButtonText(t().settings.resetToDefault).onClick(() => {
+                    ConfirmModal.open(this.app, t().notice.resetTemplateConfirm, async () => {
                         this.plugin.settings.aiGlobal.noteTemplate = DEFAULT_NOTE_TEMPLATE
                         await this.plugin.saveSettings()
                         textareaEl.value = DEFAULT_NOTE_TEMPLATE
                         new Notice(t().notice.templateReset)
-                    }
+                    })
                 })
             })
     }
@@ -499,7 +510,7 @@ export class StargateSettingTab extends PluginSettingTab {
      * 분석 템플릿 섹션
      */
     private displayAnalysisTemplatesSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h2', { text: t().settings.analysisTemplates })
+        new Setting(containerEl).setName(t().settings.analysisTemplates).setHeading()
         containerEl.createEl('p', {
             text: t().settings.analysisTemplatesDesc,
             cls: 'setting-item-description'
@@ -520,11 +531,11 @@ export class StargateSettingTab extends PluginSettingTab {
                     button
                         .setButtonText(t().common.reset)
                         .setDisabled(!isCustomized)
-                        .onClick(async () => {
-                            if (confirm(t().notice.resetConfirm(template.name))) {
+                        .onClick(() => {
+                            ConfirmModal.open(this.app, t().notice.resetConfirm(template.name), async () => {
                                 await this.resetTemplate(template.id)
                                 this.display()
-                            }
+                            })
                         })
                 })
         }
@@ -537,13 +548,13 @@ export class StargateSettingTab extends PluginSettingTab {
                     .setButtonText(t().common.resetAll)
                     .setWarning()
                     .setDisabled(this.plugin.settings.customTemplates.length === 0)
-                    .onClick(async () => {
-                        if (confirm(t().notice.resetAllConfirm)) {
+                    .onClick(() => {
+                        ConfirmModal.open(this.app, t().notice.resetAllConfirm, async () => {
                             this.plugin.settings.customTemplates = []
                             await this.plugin.saveSettings()
                             new Notice(t().notice.allTemplatesReset)
                             this.display()
-                        }
+                        })
                     })
             })
     }
@@ -576,7 +587,7 @@ export class StargateSettingTab extends PluginSettingTab {
      * 저장된 프롬프트 섹션
      */
     private displaySavedPromptsSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h2', { text: t().settings.savedPrompts })
+        new Setting(containerEl).setName(t().settings.savedPrompts).setHeading()
         containerEl.createEl('p', {
             text: t().settings.savedPromptsDesc,
             cls: 'setting-item-description'
@@ -601,11 +612,11 @@ export class StargateSettingTab extends PluginSettingTab {
                     button
                         .setButtonText(t().common.delete)
                         .setWarning()
-                        .onClick(async () => {
-                            if (confirm(t().notice.deleteConfirm(savedPrompt.name))) {
+                        .onClick(() => {
+                            ConfirmModal.open(this.app, t().notice.deleteConfirm(savedPrompt.name), async () => {
                                 await this.plugin.removePrompt(savedPrompt.id)
                                 this.display()
-                            }
+                            })
                         })
                 })
         }

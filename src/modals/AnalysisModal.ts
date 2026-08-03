@@ -2,10 +2,10 @@
  * AI 분석 모달
  */
 
-import { App, Modal, Setting, Notice, TFile, MarkdownView } from 'obsidian'
+import { App, Modal, Notice, MarkdownView } from 'obsidian'
 import StargatePlugin from '../main'
 import { TemplateType } from '../types'
-import { getAnalysisTemplates, getTemplateById, getEffectiveTemplate, renderPrompt } from '../ai/templates'
+import { getAnalysisTemplates, getEffectiveTemplate, renderPrompt } from '../ai/templates'
 import { AIService, AIMessage } from '../services/AIService'
 import { t } from '../i18n'
 
@@ -21,7 +21,8 @@ interface AnalysisModalOptions {
     quickMode?: boolean  // true면 바로 분석 실행 및 저장
 }
 
-type SelectedTemplateType = TemplateType | 'raw-save' | string  // string for user-defined template IDs
+// 사용자 정의 템플릿 ID까지 담기 때문에 string이다 (TemplateType | 'raw-save'는 그 부분집합)
+type SelectedTemplateType = string
 
 export class AnalysisModal extends Modal {
     private plugin: StargatePlugin
@@ -104,12 +105,8 @@ export class AnalysisModal extends Modal {
             this.selectedTemplateId = this.plugin.settings.aiGlobal.defaultTemplate
             contentEl.createEl('h2', { text: 'Quick Analysis' })
             const statusEl = contentEl.createDiv({ cls: 'stargate-quick-status' })
-            statusEl.innerHTML = '<span class="stargate-spinner"></span><span>분석 중...</span>'
-            statusEl.style.display = 'flex'
-            statusEl.style.alignItems = 'center'
-            statusEl.style.gap = '12px'
-            statusEl.style.padding = '20px'
-            statusEl.style.justifyContent = 'center'
+            statusEl.createSpan({ cls: 'stargate-spinner' })
+            statusEl.createSpan({ text: '분석 중...' })
 
             // 바로 분석 실행
             await this.runQuickAnalysis()
@@ -124,8 +121,8 @@ export class AnalysisModal extends Modal {
 
         // URL 표시
         const urlEl = contentEl.createDiv({ cls: 'stargate-page-url-display' })
-        urlEl.createEl('span', { text: 'Source: ', cls: 'stargate-url-label' })
-        urlEl.createEl('span', { text: this.options.url, cls: 'stargate-url-value' })
+        urlEl.createSpan({ text: 'Source: ', cls: 'stargate-url-label' })
+        urlEl.createSpan({ text: this.options.url, cls: 'stargate-url-value' })
 
         // 콘텐츠 소스 + 삽입 위치 (같은 줄)
         this.renderSourceAndInsertRow(contentEl)
@@ -148,7 +145,7 @@ export class AnalysisModal extends Modal {
 
         // 왼쪽: AI Provider + Model 선택
         const providerSection = actionBar.createDiv({ cls: 'stargate-provider-section' })
-        providerSection.createEl('span', { text: t().analysis.provider, cls: 'stargate-provider-label' })
+        providerSection.createSpan({ text: t().analysis.provider, cls: 'stargate-provider-label' })
         const providerSelect = providerSection.createEl('select', { cls: 'stargate-provider-select' })
         for (const provider of this.plugin.settings.providers) {
             const option = providerSelect.createEl('option', { value: provider.id, text: provider.name })
@@ -194,8 +191,18 @@ export class AnalysisModal extends Modal {
         this.analyzeBtn = buttonContainer.createEl('button', {
             cls: 'mod-cta stargate-analyze-btn'
         })
-        this.analyzeBtn.innerHTML = '<span class="stargate-btn-text">생성</span>'
-        this.analyzeBtn.onclick = () => this.runAnalysis()
+        this.setAnalyzeButtonContent('생성')
+        this.analyzeBtn.onclick = () => void this.runAnalysis()
+    }
+
+    /**
+     * 분석 버튼 내용 설정 (스피너 + 라벨)
+     */
+    private setAnalyzeButtonContent(text: string, showSpinner = false): void {
+        if (!this.analyzeBtn) return
+        this.analyzeBtn.empty()
+        if (showSpinner) this.analyzeBtn.createSpan({ cls: 'stargate-spinner' })
+        this.analyzeBtn.createSpan({ cls: 'stargate-btn-text', text })
     }
 
     /**
@@ -415,7 +422,7 @@ export class AnalysisModal extends Modal {
 
         // 콘텐츠 소스 선택
         const sourceEl = rowEl.createDiv({ cls: 'stargate-content-source' })
-        sourceEl.createEl('span', { text: 'Content:', cls: 'stargate-source-label' })
+        sourceEl.createSpan({ text: 'Content:', cls: 'stargate-source-label' })
 
         const sourceButtonsEl = sourceEl.createDiv({ cls: 'stargate-source-buttons' })
 
@@ -453,7 +460,7 @@ export class AnalysisModal extends Modal {
 
         // 삽입 위치 선택
         const insertEl = rowEl.createDiv({ cls: 'stargate-insert-location' })
-        insertEl.createEl('span', { text: 'Insert:', cls: 'stargate-insert-label' })
+        insertEl.createSpan({ text: 'Insert:', cls: 'stargate-insert-label' })
 
         const insertButtonsEl = insertEl.createDiv({ cls: 'stargate-insert-buttons' })
 
@@ -480,7 +487,7 @@ export class AnalysisModal extends Modal {
     // Legacy method - kept for compatibility
     private renderContentSourceSelector(container: HTMLElement): void {
         const selectorEl = container.createDiv({ cls: 'stargate-content-source' })
-        selectorEl.createEl('span', { text: 'Content Source:', cls: 'stargate-source-label' })
+        selectorEl.createSpan({ text: 'Content Source:', cls: 'stargate-source-label' })
 
         const buttonsEl = selectorEl.createDiv({ cls: 'stargate-source-buttons' })
 
@@ -550,7 +557,7 @@ export class AnalysisModal extends Modal {
             this.updateCharCount()
         })
 
-        this.charCountEl = editorSection.createEl('div', {
+        this.charCountEl = editorSection.createDiv({
             cls: 'stargate-char-count',
             text: `${this.editableContent.length} characters`
         })
@@ -587,8 +594,8 @@ export class AnalysisModal extends Modal {
                 cls: `stargate-template-btn ${this.selectedTemplateId === template.id ? 'selected' : ''}`
             })
 
-            btn.createEl('span', { text: template.icon, cls: 'stargate-template-icon' })
-            btn.createEl('span', { text: template.name, cls: 'stargate-template-name' })
+            btn.createSpan({ text: template.icon, cls: 'stargate-template-icon' })
+            btn.createSpan({ text: template.name, cls: 'stargate-template-name' })
 
             btn.setAttribute('aria-label', template.description)
             btn.setAttribute('title', template.description)
@@ -608,8 +615,8 @@ export class AnalysisModal extends Modal {
                     cls: `stargate-template-btn stargate-user-template ${this.selectedTemplateId === userTemplate.id ? 'selected' : ''}`
                 })
 
-                btn.createEl('span', { text: userTemplate.icon || '⭐', cls: 'stargate-template-icon' })
-                btn.createEl('span', { text: userTemplate.name, cls: 'stargate-template-name' })
+                btn.createSpan({ text: userTemplate.icon || '⭐', cls: 'stargate-template-icon' })
+                btn.createSpan({ text: userTemplate.name, cls: 'stargate-template-name' })
 
                 btn.setAttribute('title', `User template: ${userTemplate.name}`)
 
@@ -625,8 +632,8 @@ export class AnalysisModal extends Modal {
         const rawBtn = templatesEl.createDiv({
             cls: `stargate-template-btn stargate-raw-save ${this.selectedTemplateId === 'raw-save' ? 'selected' : ''}`
         })
-        rawBtn.createEl('span', { text: '📄', cls: 'stargate-template-icon' })
-        rawBtn.createEl('span', { text: '원문 저장', cls: 'stargate-template-name' })
+        rawBtn.createSpan({ text: '📄', cls: 'stargate-template-icon' })
+        rawBtn.createSpan({ text: '원문 저장', cls: 'stargate-template-name' })
         rawBtn.setAttribute('title', 'AI 처리 없이 원문 그대로 저장')
 
         rawBtn.onclick = () => {
@@ -695,7 +702,7 @@ export class AnalysisModal extends Modal {
             cls: `stargate-prompt-tab ${this.activePromptTab === 'template' ? 'active' : ''}`,
             attr: { 'data-tab': 'template' }
         })
-        this.templatePromptDisplayEl = templateTab.createEl('div', {
+        this.templatePromptDisplayEl = templateTab.createDiv({
             cls: 'stargate-template-prompt-display',
             text: '템플릿을 선택하면 프롬프트 내용이 표시됩니다.'
         })
@@ -708,7 +715,7 @@ export class AnalysisModal extends Modal {
         })
 
         // 우선 적용 안내 메시지
-        customTab.createEl('div', {
+        customTab.createDiv({
             text: '※ 커스텀 프롬프트 입력 시 템플릿 대신 이 프롬프트가 적용됩니다.',
             cls: 'stargate-prompt-notice'
         })
@@ -721,7 +728,7 @@ export class AnalysisModal extends Modal {
 
             for (const prompt of this.plugin.settings.savedPrompts) {
                 const btn = promptsEl.createDiv({ cls: 'stargate-saved-prompt-btn' })
-                btn.createEl('span', { text: prompt.name })
+                btn.createSpan({ text: prompt.name })
                 btn.setAttribute('title', prompt.prompt)
 
                 btn.onclick = () => {
@@ -792,11 +799,11 @@ export class AnalysisModal extends Modal {
                 this.templatePromptDisplayEl.empty()
                 this.templatePromptDisplayEl.removeClass('stargate-prompt-raw')
 
-                this.templatePromptDisplayEl.createEl('div', {
+                this.templatePromptDisplayEl.createDiv({
                     text: `[${userFullTemplate.name}] (사용자 정의)`,
                     cls: 'stargate-prompt-template-name'
                 })
-                this.templatePromptDisplayEl.createEl('div', {
+                this.templatePromptDisplayEl.createDiv({
                     text: userFullTemplate.prompt.replace('{{content}}', '[콘텐츠]'),
                     cls: 'stargate-prompt-template-content'
                 })
@@ -810,11 +817,11 @@ export class AnalysisModal extends Modal {
                     this.templatePromptDisplayEl.empty()
                     this.templatePromptDisplayEl.removeClass('stargate-prompt-raw')
 
-                    this.templatePromptDisplayEl.createEl('div', {
+                    this.templatePromptDisplayEl.createDiv({
                         text: `[${template.name}]`,
                         cls: 'stargate-prompt-template-name'
                     })
-                    this.templatePromptDisplayEl.createEl('div', {
+                    this.templatePromptDisplayEl.createDiv({
                         text: template.userPromptTemplate.replace('{{content}}', '[콘텐츠]'),
                         cls: 'stargate-prompt-template-content'
                     })
@@ -844,7 +851,6 @@ export class AnalysisModal extends Modal {
                     btns[selectedIndex].addClass('selected')
                 } else {
                     // 사용자 정의 전체 템플릿 확인
-                    const userTemplateBtn = this.contentEl.querySelector(`.stargate-user-template`)
                     const userFullTemplates = this.plugin.settings.savedPrompts.filter(p => p.systemPrompt)
                     const userIndex = userFullTemplates.findIndex(t => t.id === this.selectedTemplateId)
                     if (userIndex >= 0) {
@@ -893,7 +899,7 @@ export class AnalysisModal extends Modal {
         // 버튼 상태 변경
         if (this.analyzeBtn) {
             this.analyzeBtn.disabled = true
-            this.analyzeBtn.innerHTML = '<span class="stargate-spinner"></span><span class="stargate-btn-text">생성중...</span>'
+            this.setAnalyzeButtonContent('생성중...', true)
         }
 
         try {
@@ -952,7 +958,7 @@ export class AnalysisModal extends Modal {
             // 버튼 상태 복원
             if (this.analyzeBtn) {
                 this.analyzeBtn.disabled = false
-                this.analyzeBtn.innerHTML = '<span class="stargate-btn-text">생성</span>'
+                this.setAnalyzeButtonContent('생성')
             }
             this.isAnalyzing = false
         }
@@ -978,7 +984,7 @@ export class AnalysisModal extends Modal {
             onRegenerate: () => {
                 // 재생성 - 다시 분석 실행
                 if (!isRaw) {
-                    this.runAnalysis()
+                    void this.runAnalysis()
                 }
             },
             onCancel: () => {
@@ -991,8 +997,6 @@ export class AnalysisModal extends Modal {
      * 분석 결과를 노트로 저장
      */
     private async createNote(content: string, isRaw: boolean, model?: string): Promise<void> {
-        const { vault, workspace } = this.app
-
         let templateName: string
         const useCustomPrompt = this.customPrompt.trim().length > 0
 
@@ -1235,7 +1239,7 @@ interface PreviewModalOptions {
     isRaw: boolean
     provider?: string
     model?: string
-    onApply: () => void
+    onApply: () => void | Promise<void>
     onRegenerate: () => void
     onCancel: () => void
 }
@@ -1256,58 +1260,38 @@ class PreviewModal extends Modal {
         modalEl.addClass('stargate-result-modal')
 
         // 제목
-        const titleEl = contentEl.createEl('h2', {
-            text: this.options.isRaw ? 'Content Preview' : 'Analysis Result'
+        contentEl.createEl('h2', {
+            text: this.options.isRaw ? 'Content Preview' : 'Analysis Result',
+            cls: 'stargate-preview-title',
         })
-        titleEl.style.marginBottom = '12px'
 
         // Provider/Model 정보 표시 (AI 분석일 때만)
         if (!this.options.isRaw && (this.options.provider || this.options.model)) {
-            const infoEl = contentEl.createDiv()
-            infoEl.style.display = 'flex'
-            infoEl.style.gap = '16px'
-            infoEl.style.marginBottom = '12px'
-            infoEl.style.fontSize = '12px'
-            infoEl.style.color = 'var(--text-muted)'
+            const infoEl = contentEl.createDiv({ cls: 'stargate-preview-info' })
 
             if (this.options.provider) {
                 const providerEl = infoEl.createSpan()
-                providerEl.innerHTML = `<strong>Provider:</strong> ${this.options.provider}`
+                providerEl.createEl('strong', { text: 'Provider:' })
+                providerEl.appendText(` ${this.options.provider}`)
             }
             if (this.options.model) {
                 const modelEl = infoEl.createSpan()
-                modelEl.innerHTML = `<strong>Model:</strong> ${this.options.model}`
+                modelEl.createEl('strong', { text: 'Model:' })
+                modelEl.appendText(` ${this.options.model}`)
             }
         }
 
         // 스크롤 가능한 콘텐츠 영역
-        const scrollContainer = contentEl.createDiv()
-        scrollContainer.style.height = 'calc(70vh - 100px)'
-        scrollContainer.style.maxHeight = '500px'
-        scrollContainer.style.overflowY = 'auto'
-        scrollContainer.style.overflowX = 'hidden'
-        scrollContainer.style.padding = '16px'
-        scrollContainer.style.background = 'var(--background-secondary)'
-        scrollContainer.style.borderRadius = '8px'
-        scrollContainer.style.border = '1px solid var(--background-modifier-border)'
+        const scrollContainer = contentEl.createDiv({ cls: 'stargate-preview-scroll' })
 
         // 콘텐츠 (pre 태그)
-        const preEl = scrollContainer.createEl('pre')
-        preEl.style.margin = '0'
-        preEl.style.whiteSpace = 'pre-wrap'
-        preEl.style.wordBreak = 'break-word'
-        preEl.style.fontFamily = 'inherit'
-        preEl.style.fontSize = '13px'
-        preEl.style.lineHeight = '1.6'
-        preEl.style.color = 'var(--text-normal)'
-        preEl.textContent = this.options.content
+        scrollContainer.createEl('pre', {
+            cls: 'stargate-preview-content',
+            text: this.options.content,
+        })
 
         // 버튼 컨테이너
-        const buttonContainer = contentEl.createDiv()
-        buttonContainer.style.display = 'flex'
-        buttonContainer.style.justifyContent = 'flex-end'
-        buttonContainer.style.gap = '8px'
-        buttonContainer.style.marginTop = '20px'
+        const buttonContainer = contentEl.createDiv({ cls: 'stargate-preview-buttons' })
 
         // 취소 버튼
         const cancelBtn = buttonContainer.createEl('button', { text: '취소' })
@@ -1332,7 +1316,7 @@ class PreviewModal extends Modal {
         })
         applyBtn.onclick = () => {
             this.close()
-            this.options.onApply()
+            void this.options.onApply()
         }
     }
 

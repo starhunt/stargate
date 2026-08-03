@@ -3,7 +3,7 @@
  */
 
 import { requestUrl } from 'obsidian'
-import { AIProviderDefinition, AIModelDefinition, AIApiFormat } from '../types'
+import { AIProviderDefinition, AIModelDefinition } from '../types'
 
 export interface AIMessage {
     role: 'system' | 'user' | 'assistant'
@@ -15,6 +15,26 @@ export interface AIResponse {
     provider: string
     model: string
     error?: string
+}
+
+/**
+ * 각 제공자 응답에서 실제로 읽는 필드만 최소한으로 정의한다
+ * (requestUrl().json은 any라 그대로 쓰면 타입 안전성이 사라진다)
+ */
+interface OpenAIFormatResponse {
+    choices?: { message?: { content?: string } }[]
+}
+
+interface AnthropicFormatResponse {
+    content?: { text?: string }[]
+}
+
+interface GeminiFormatResponse {
+    candidates?: { content?: { parts?: { text?: string }[] } }[]
+}
+
+interface OllamaFormatResponse {
+    message?: { content?: string }
 }
 
 export class AIService {
@@ -172,7 +192,7 @@ export class AIService {
             case 'ollama':
                 return await this.callOllamaFormat(provider, modelId, messages)
             default:
-                throw new Error(`Unknown API format: ${provider.apiFormat}`)
+                throw new Error(`Unknown API format: ${String(provider.apiFormat)}`)
         }
     }
 
@@ -207,7 +227,7 @@ export class AIService {
             })
         })
 
-        const data = response.json
+        const data = response.json as OpenAIFormatResponse
         return {
             content: data.choices?.[0]?.message?.content || '',
             provider: provider.id,
@@ -247,7 +267,7 @@ export class AIService {
             })
         })
 
-        const data = response.json
+        const data = response.json as AnthropicFormatResponse
         return {
             content: data.content?.[0]?.text || '',
             provider: provider.id,
@@ -290,7 +310,7 @@ export class AIService {
             })
         })
 
-        const data = response.json
+        const data = response.json as GeminiFormatResponse
         return {
             content: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
             provider: provider.id,
@@ -321,7 +341,7 @@ export class AIService {
             })
         })
 
-        const data = response.json
+        const data = response.json as OllamaFormatResponse
         return {
             content: data.message?.content || '',
             provider: provider.id,

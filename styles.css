@@ -1341,3 +1341,79 @@
 .hidden {
     display: none;
 }
+
+/* ==========================================================================
+   Lint 대응: 인라인 스타일에서 옮겨온 클래스
+   ========================================================================== */
+
+/* Quick analysis status row */
+.stargate-quick-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+}
+
+/* Preview modal */
+.stargate-preview-title {
+    margin-bottom: 12px;
+}
+
+.stargate-preview-info {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.stargate-preview-scroll {
+    height: calc(70vh - 100px);
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.stargate-preview-content {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-normal);
+}
+
+.stargate-preview-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+/* Embedded browser frame (webview / iframe) */
+.stargate-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Narrow inline inputs */
+.stargate-input-model-name {
+    width: 220px;
+}
+
+.stargate-input-short {
+    width: 60px;
+}
+
+/* Confirm modal */
+.stargate-confirm-modal .stargate-confirm-message {
+    margin: 0 0 20px;
+    white-space: pre-wrap;
+}

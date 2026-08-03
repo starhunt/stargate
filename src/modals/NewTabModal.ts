@@ -1,7 +1,7 @@
 import { App, Modal, Setting, Notice } from 'obsidian'
 
 interface NewTabModalOptions {
-    onSubmit: (url: string) => void
+    onSubmit: (url: string) => void | Promise<void>
 }
 
 export class NewTabModal extends Modal {
@@ -78,7 +78,7 @@ export class NewTabModal extends Modal {
             return
         }
 
-        this.options.onSubmit(normalizedUrl)
+        void this.options.onSubmit(normalizedUrl)
         this.close()
     }
 

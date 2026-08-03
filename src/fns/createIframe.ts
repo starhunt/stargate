@@ -8,13 +8,10 @@ interface IframeParams {
 }
 
 export function createIframe(params: IframeParams, onReady: () => void): HTMLIFrameElement {
-    const iframe = document.createElement('iframe')
+    const iframe = createEl('iframe', { cls: 'stargate-frame' })
 
     // 기본 속성 설정
     iframe.src = params.url
-    iframe.style.width = '100%'
-    iframe.style.height = '100%'
-    iframe.style.border = 'none'
 
     // 샌드박스 설정 (보안)
     iframe.setAttribute(

@@ -202,7 +202,7 @@ export const ko = {
     systemPrompt: '시스템 프롬프트',
     systemPromptDesc: 'AI 모델의 역할, 행동, 포맷 지시사항',
     userPromptTemplate: '사용자 프롬프트 템플릿',
-    userPromptDesc: '사용자 메시지 템플릿. <code>{{content}}</code>에 실제 내용이 들어갑니다.',
+    userPromptDesc: '사용자 메시지 템플릿. {{content}}에 실제 내용이 들어갑니다.',
     systemPromptEmpty: '시스템 프롬프트를 입력해주세요.',
     userPromptEmpty: '사용자 프롬프트 템플릿을 입력해주세요.',
     userPromptMissingContent: '사용자 프롬프트에 {{content}} 변수가 포함되어야 합니다.',
