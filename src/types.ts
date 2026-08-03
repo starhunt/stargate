@@ -76,9 +76,9 @@ export interface AIProviderDefinition {
  * AI 모델 정의
  */
 export interface AIModelDefinition {
-    /** 모델 ID (API 호출용, 예: 'gemini-2.0-flash') */
+    /** 모델 ID (API 호출용, 예: 'gemini-3.6-flash') */
     id: string
-    /** 표시 이름 (예: 'Gemini 2.0 Flash') */
+    /** 표시 이름 (예: 'Gemini 3.6 Flash') */
     name: string
     /** 소속 제공자 ID */
     providerId: string
@@ -86,6 +86,16 @@ export interface AIModelDefinition {
     enabled: boolean
     /** 모델 전용 API 키 (미설정 시 제공자의 키 사용) */
     apiKey?: string
+}
+
+/**
+ * 서비스 종료 모델 교체 규칙
+ */
+export interface DeprecatedModelMigration {
+    /** 이 접두사로 시작하는 모델 ID를 교체 대상으로 본다 (예: 'gemini-2.5') */
+    matchPrefixes: string[]
+    /** 대체할 모델 */
+    replacement: { id: string; name: string }
 }
 
 /**
@@ -195,7 +205,7 @@ export interface AnalysisConfig {
  * 플러그인 설정
  */
 export interface PluginSettings {
-    settingsVersion: number     // v2
+    settingsVersion: number     // 현재 v3 (SETTINGS_VERSION)
     uuid: string
     language: SupportedLocale   // UI 언어 설정
     pinnedSites: PinnedSite[]
@@ -265,10 +275,17 @@ export const DEFAULT_AI_GLOBAL_SETTINGS: AIGlobalSettings = {
 }
 
 /**
+ * 현재 설정 스키마 버전
+ * - v2: 프로바이더/모델 다중 정의 구조 도입
+ * - v3: 서비스 종료 모델(Gemini 2.0/2.5) 강제 교체
+ */
+export const SETTINGS_VERSION = 3
+
+/**
  * 기본 플러그인 설정
  */
 export const DEFAULT_SETTINGS: PluginSettings = {
-    settingsVersion: 2,
+    settingsVersion: SETTINGS_VERSION,
     uuid: '',
     language: 'auto',
     pinnedSites: [],
@@ -278,7 +295,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     providers: [],      // 초기화 시 BUILT_IN_PROVIDERS로 채움
     models: [],         // 초기화 시 BUILT_IN_MODELS로 채움
     defaultProviderId: 'openai',
-    defaultModelId: 'gpt-4o',
+    defaultModelId: 'gpt-5.6-luna',
     aiGlobal: DEFAULT_AI_GLOBAL_SETTINGS,
     savedPrompts: [],
     customTemplates: [],

@@ -2,7 +2,7 @@
  * Stargate Plugin Constants
  */
 
-import { AIProviderDefinition, AIModelDefinition } from './types'
+import { AIProviderDefinition, AIModelDefinition, DeprecatedModelMigration } from './types'
 
 // ============================================
 // Plugin Info
@@ -117,12 +117,32 @@ export const BUILT_IN_PROVIDERS: AIProviderDefinition[] = [
 ]
 
 export const BUILT_IN_MODELS: AIModelDefinition[] = [
-    { id: 'gpt-4o', name: 'GPT-4o', providerId: 'openai', enabled: true },
-    { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', providerId: 'anthropic', enabled: true },
-    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', providerId: 'gemini', enabled: true },
-    { id: 'grok-2-latest', name: 'Grok 2', providerId: 'xai', enabled: true },
-    { id: 'glm-4-flash', name: 'GLM-4 Flash', providerId: 'zai', enabled: true },
+    { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', providerId: 'openai', enabled: true },
+    { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', providerId: 'anthropic', enabled: true },
+    { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', providerId: 'gemini', enabled: true },
+    { id: 'grok-4.5', name: 'Grok 4.5', providerId: 'xai', enabled: true },
+    { id: 'glm-5.2', name: 'GLM-5.2', providerId: 'zai', enabled: true },
     { id: 'llama3.2', name: 'Llama 3.2', providerId: 'ollama', enabled: true },
+]
+
+/**
+ * 서비스가 종료된 모델 → 대체 모델 강제 교체 규칙 (설정 마이그레이션용)
+ *
+ * 이미 API가 404를 반환하는 모델을 사용자 설정에 남겨두면 AI 호출이 그대로 실패하므로,
+ * 설정 로드 시 1회 자동 교체한다. 교체 후 사용자가 직접 되돌리면 다시 건드리지 않는다.
+ */
+export const DEPRECATED_MODEL_MIGRATIONS: DeprecatedModelMigration[] = [
+    {
+        // Gemini 2.0: 2026-06-01 종료 / Gemini 2.5: 2026-07-09부터 404
+        matchPrefixes: ['gemini-2.0', 'gemini-2.5'],
+        replacement: { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash' },
+    },
+    {
+        // Grok 2: 모델 목록에서 제거됨 / Grok 3·grok-4-* 계열: 2026-05-15 은퇴 (grok-4.3으로 리다이렉트)
+        // 'grok-4-'는 은퇴한 하이픈 표기(grok-4-fast, grok-4-0709 등)만 잡는다. 현행 grok-4.3/4.5는 점 표기라 걸리지 않는다.
+        matchPrefixes: ['grok-2', 'grok-3', 'grok-4-'],
+        replacement: { id: 'grok-4.5', name: 'Grok 4.5' },
+    },
 ]
 
 // ============================================
