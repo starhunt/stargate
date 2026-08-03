@@ -2,13 +2,13 @@
  * 분석 템플릿 편집 모달
  */
 
-import { App, Modal, Setting, Notice } from 'obsidian'
+import { App, Modal, Notice } from 'obsidian'
 import { AnalysisTemplate } from '../types'
 import { t } from '../i18n'
 
 interface EditTemplateModalOptions {
     template: AnalysisTemplate
-    onSubmit: (systemPrompt: string, userPromptTemplate: string) => void
+    onSubmit: (systemPrompt: string, userPromptTemplate: string) => void | Promise<void>
 }
 
 export class EditTemplateModal extends Modal {
@@ -60,8 +60,14 @@ export class EditTemplateModal extends Modal {
         const userSection = contentEl.createDiv({ cls: 'stargate-template-section' })
         userSection.createEl('h3', { text: t().templateModal.userPromptTemplate })
 
+        // '{{content}}' 토큰만 <code>으로 감싸 렌더링 (문자열은 번역 단위 유지)
         const helpEl = userSection.createEl('p', { cls: 'setting-item-description' })
-        helpEl.innerHTML = t().templateModal.userPromptDesc
+        const CONTENT_TOKEN = '{{content}}'
+        const segments = t().templateModal.userPromptDesc.split(CONTENT_TOKEN)
+        segments.forEach((segment, index) => {
+            if (index > 0) helpEl.createEl('code', { text: CONTENT_TOKEN })
+            helpEl.appendText(segment)
+        })
 
         const userTextarea = userSection.createEl('textarea', {
             cls: 'stargate-template-textarea'
@@ -96,7 +102,7 @@ export class EditTemplateModal extends Modal {
                 return
             }
 
-            this.options.onSubmit(this.systemPrompt, this.userPromptTemplate)
+            void this.options.onSubmit(this.systemPrompt, this.userPromptTemplate)
             this.close()
         }
     }

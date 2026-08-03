@@ -1,8 +1,8 @@
-import { ItemView, WorkspaceLeaf, Platform, Notice, setIcon } from 'obsidian'
+import { App, ItemView, WorkspaceLeaf, Platform, Notice, setIcon } from 'obsidian'
 import WebviewTag = Electron.WebviewTag
 import StargatePlugin from '../main'
-import { VIEW_TYPE_BROWSER, FAVICON_SERVICE_URL, OAUTH_DOMAINS, BLANK_URL } from '../constants'
-import { PinnedSite, TempTab, TabState } from '../types'
+import { PLUGIN_ID, VIEW_TYPE_BROWSER, FAVICON_SERVICE_URL } from '../constants'
+import { TabState } from '../types'
 import { createWebviewTag } from '../fns/createWebviewTag'
 import { createIframe } from '../fns/createIframe'
 import { isOAuthUrl } from '../fns/isOAuthUrl'
@@ -10,9 +10,37 @@ import { NewTabModal } from '../modals/NewTabModal'
 import { AnalysisModal } from '../modals/AnalysisModal'
 
 interface CachedFrame {
-    frame: HTMLIFrameElement | WebviewTag
+    frame: HTMLIFrameElement | WebviewTag | null
     isReady: boolean
     readyCallbacks: (() => void)[]
+}
+
+/**
+ * Electron 23 타입 정의에 포함되지 않은 webview 이벤트 페이로드
+ * (webview는 커스텀 엘리먼트라 addEventListener가 기본 Event로 좁혀진다)
+ */
+interface WebviewNewWindowEvent extends Event {
+    url: string
+}
+
+interface WebviewBeforeInputEvent extends Event {
+    input: {
+        key: string
+        shift: boolean
+        control: boolean
+        meta: boolean
+    }
+}
+
+/**
+ * 설정 탭을 여는 API는 공개 타입에 없다 (App.setting은 비공개).
+ * 동작은 그대로 두되 @ts-ignore 대신 최소 형태로 타입을 명시한다.
+ */
+interface AppWithSetting extends App {
+    setting: {
+        open(): void
+        openTabById(id: string): void
+    }
 }
 
 export class BrowserView extends ItemView {
@@ -62,8 +90,8 @@ export class BrowserView extends ItemView {
 
     async onClose(): Promise<void> {
         // 모든 캐시된 프레임 제거
-        for (const [id, cached] of this.frameCache) {
-            cached.frame.remove()
+        for (const [, cached] of this.frameCache) {
+            cached.frame?.remove()
         }
         this.frameCache.clear()
         this.activeFrameId = null
@@ -162,7 +190,7 @@ export class BrowserView extends ItemView {
             setIcon(closeBtn, 'x')
             closeBtn.onclick = (e) => {
                 e.stopPropagation()
-                this.closeTab(options.id)
+                void this.closeTab(options.id)
             }
         }
     }
@@ -202,12 +230,16 @@ export class BrowserView extends ItemView {
         const settingsBtn = container.createDiv({ cls: 'stargate-action-btn' })
         setIcon(settingsBtn, 'settings')
         settingsBtn.setAttribute('aria-label', 'Settings')
-        settingsBtn.onclick = () => {
-            // @ts-ignore
-            this.app.setting.open()
-            // @ts-ignore
-            this.app.setting.openTabById('stargate')
-        }
+        settingsBtn.onclick = () => this.openPluginSettings()
+    }
+
+    /**
+     * 이 플러그인의 설정 탭 열기
+     */
+    private openPluginSettings(): void {
+        const { setting } = this.app as AppWithSetting
+        setting.open()
+        setting.openTabById(PLUGIN_ID)
     }
 
     /**
@@ -267,7 +299,7 @@ export class BrowserView extends ItemView {
 
         // 첫 번째 고정 사이트 로드
         if (pinnedSites.length > 0) {
-            this.plugin.setActiveTab(pinnedSites[0].id)
+            void this.plugin.setActiveTab(pinnedSites[0].id)
             this.switchToTab(pinnedSites[0].id)
             return
         }
@@ -296,20 +328,15 @@ export class BrowserView extends ItemView {
         emptyEl.createEl('p', { text: 'Add pinned sites in Settings or click + to open a new tab.' })
 
         const addBtn = emptyEl.createEl('button', { text: 'Open Settings' })
-        addBtn.onclick = () => {
-            // @ts-ignore
-            this.app.setting.open()
-            // @ts-ignore
-            this.app.setting.openTabById('stargate')
-        }
+        addBtn.onclick = () => this.openPluginSettings()
     }
 
     /**
      * 모든 프레임 숨기기
      */
     private hideAllFrames(): void {
-        for (const [id, cached] of this.frameCache) {
-            (cached.frame as HTMLElement).style.display = 'none'
+        for (const [, cached] of this.frameCache) {
+            (cached.frame as HTMLElement).addClass('stargate-hidden')
         }
     }
 
@@ -346,7 +373,7 @@ export class BrowserView extends ItemView {
             }
         }
 
-        this.plugin.setActiveTab(id)
+        void this.plugin.setActiveTab(id)
 
         // Empty state 제거
         const emptyEl = this.contentAreaEl?.querySelector('.stargate-empty-state')
@@ -360,7 +387,7 @@ export class BrowserView extends ItemView {
         // 캐시된 프레임이 있으면 표시, 없으면 생성
         if (this.frameCache.has(id)) {
             const cached = this.frameCache.get(id)!
-            ;(cached.frame as HTMLElement).style.display = ''
+            ;(cached.frame as HTMLElement).removeClass('stargate-hidden')
             this.activeFrameId = id
         } else {
             // 새 프레임 생성
@@ -379,7 +406,7 @@ export class BrowserView extends ItemView {
         if (!this.contentAreaEl) return
 
         const cached: CachedFrame = {
-            frame: null as any,
+            frame: null,
             isReady: false,
             readyCallbacks: []
         }
@@ -398,10 +425,10 @@ export class BrowserView extends ItemView {
 
             // OAuth 및 팝업 처리
             if (cached.frame && 'addEventListener' in cached.frame) {
-                const webview = cached.frame as WebviewTag
+                const webview = cached.frame
 
-                webview.addEventListener('new-window', (e: any) => {
-                    const targetUrl = e.url as string
+                webview.addEventListener('new-window', (e) => {
+                    const targetUrl = (e as WebviewNewWindowEvent).url
                     if (!targetUrl) return
 
                     if (isOAuthUrl(targetUrl)) {
@@ -409,7 +436,7 @@ export class BrowserView extends ItemView {
                         webview.src = targetUrl
                     } else {
                         // 일반 팝업은 새 탭으로
-                        this.plugin.addTempTab(targetUrl, 'New Tab').then((tab) => {
+                        void this.plugin.addTempTab(targetUrl, 'New Tab').then((tab) => {
                             this.switchToTab(tab.id)
                             this.refreshTabBar()
                         })
@@ -417,22 +444,22 @@ export class BrowserView extends ItemView {
                 })
 
                 // 키보드 단축키 처리 (webview 포커스 상태에서도 작동)
-                webview.addEventListener('before-input-event', (e: any) => {
-                    const input = e.input
+                webview.addEventListener('before-input-event', (e) => {
+                    const input = (e as WebviewBeforeInputEvent).input
                     // Cmd/Ctrl + Shift + A: AI Analysis
                     if ((input.meta || input.control) && input.shift && input.key === 'a') {
                         e.preventDefault()
-                        this.openAnalysisModal()
+                        void this.openAnalysisModal()
                     }
                     // Cmd/Ctrl + Shift + S: Quick Save
                     if ((input.meta || input.control) && input.shift && input.key === 's') {
                         e.preventDefault()
-                        this.quickSave()
+                        void this.quickSave()
                     }
                 })
 
                 // 타이틀 업데이트
-                webview.addEventListener('page-title-updated', (e: any) => {
+                webview.addEventListener('page-title-updated', (e) => {
                     const title = e.title
                     if (title && this.currentTabState && this.currentTabState.id === id) {
                         // 임시 탭의 경우 타이틀 업데이트
@@ -440,7 +467,7 @@ export class BrowserView extends ItemView {
                         if (tempTab) {
                             tempTab.title = title
                             this.currentTabState.title = title
-                            this.plugin.saveSettings()
+                            void this.plugin.saveSettings()
                             this.refreshTabBar()
                         }
                     }
@@ -454,7 +481,7 @@ export class BrowserView extends ItemView {
 
         // DOM에 추가
         if (cached.frame) {
-            this.contentAreaEl.appendChild(cached.frame as unknown as HTMLElement)
+            this.contentAreaEl.appendChild(cached.frame)
         }
     }
 
@@ -465,7 +492,7 @@ export class BrowserView extends ItemView {
         // 캐시에서 프레임 제거
         const cached = this.frameCache.get(id)
         if (cached) {
-            cached.frame.remove()
+            cached.frame?.remove()
             this.frameCache.delete(id)
         }
 
@@ -507,8 +534,9 @@ export class BrowserView extends ItemView {
         if (!cached) return
 
         if (this.useIframe) {
+            // src를 다시 지정해 강제로 리로드한다 (자기 대입 대신 setAttribute 사용)
             const iframe = cached.frame as HTMLIFrameElement
-            iframe.src = iframe.src
+            iframe.setAttribute('src', iframe.src)
         } else {
             ;(cached.frame as WebviewTag).reload()
         }
@@ -797,7 +825,7 @@ ${textToSave}
             const execute = () => {
                 webview
                     .executeJavaScript(`window.getSelection()?.toString() || ''`)
-                    .then((text) => resolve(text || null))
+                    .then((text: unknown) => resolve(typeof text === 'string' && text ? text : null))
                     .catch(() => resolve(null))
             }
 

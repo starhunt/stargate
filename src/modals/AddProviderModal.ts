@@ -9,13 +9,13 @@ import { t } from '../i18n'
 
 export class AddProviderModal extends Modal {
     private result: AIProviderDefinition
-    private onSubmit: (result: AIProviderDefinition) => void
+    private onSubmit: (result: AIProviderDefinition) => void | Promise<void>
     private isEdit: boolean
     private existingIds: string[]
 
     constructor(
         app: App,
-        onSubmit: (result: AIProviderDefinition) => void,
+        onSubmit: (result: AIProviderDefinition) => void | Promise<void>,
         existingIds: string[],
         editProvider?: AIProviderDefinition,
     ) {
@@ -28,8 +28,8 @@ export class AddProviderModal extends Modal {
             name: '',
             baseUrl: '',
             apiKey: '',
-            authType: 'bearer' as AIAuthType,
-            apiFormat: 'openai' as AIApiFormat,
+            authType: 'bearer',
+            apiFormat: 'openai',
             isBuiltIn: false,
         }
     }
@@ -190,7 +190,7 @@ export class AddProviderModal extends Modal {
                 new Notice(t().notice.duplicateProviderId)
                 return
             }
-            this.onSubmit(this.result)
+            void this.onSubmit(this.result)
             this.close()
         }
 

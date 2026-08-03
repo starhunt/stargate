@@ -20,7 +20,9 @@ export function createWebviewTag(
     onReady: () => void,
     doc: Document
 ): WebviewTag {
-    const webviewTag = doc.createElement('webview') as unknown as WebviewTag
+    // 'webview'는 Electron 전용 커스텀 엘리먼트라 Obsidian createEl의 태그 목록에 없다.
+    // doc는 팝아웃 창 지원을 위해 주입받는다 (전역 헬퍼는 메인 문서에 생성됨).
+    const webviewTag: WebviewTag = doc.createElement('webview')
 
     // 기본 속성 설정
     webviewTag.setAttribute('src', params.url)
@@ -47,9 +49,7 @@ export function createWebviewTag(
     }
 
     // 스타일 설정
-    webviewTag.style.width = '100%'
-    webviewTag.style.height = '100%'
-    webviewTag.style.border = 'none'
+    webviewTag.addClass('stargate-frame')
 
     // DOM Ready 이벤트
     webviewTag.addEventListener('dom-ready', () => {
@@ -57,22 +57,22 @@ export function createWebviewTag(
 
         // 커스텀 CSS 주입
         if (params.css) {
-            webviewTag.insertCSS(params.css)
+            void webviewTag.insertCSS(params.css)
         }
 
         // 커스텀 JS 주입
         if (params.js) {
-            webviewTag.executeJavaScript(params.js)
+            void webviewTag.executeJavaScript(params.js)
         }
     })
 
     // 에러 처리
-    webviewTag.addEventListener('did-fail-load', (event: any) => {
+    webviewTag.addEventListener('did-fail-load', (event) => {
         console.error('Webview failed to load:', event.errorDescription)
     })
 
     // 콘솔 메시지 (디버깅용)
-    webviewTag.addEventListener('console-message', (event: any) => {
+    webviewTag.addEventListener('console-message', (event) => {
         if (event.level === 2) {
             // Error level
             console.error('[Webview]', event.message)

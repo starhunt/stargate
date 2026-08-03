@@ -3,7 +3,7 @@ import { PinnedSite } from '../types'
 
 interface EditSiteModalOptions {
     site?: PinnedSite  // 편집 시 기존 사이트 정보
-    onSubmit: (name: string, url: string) => void
+    onSubmit: (name: string, url: string) => void | Promise<void>
 }
 
 export class EditSiteModal extends Modal {
@@ -100,7 +100,7 @@ export class EditSiteModal extends Modal {
             return
         }
 
-        this.options.onSubmit(this.name.trim(), normalizedUrl)
+        void this.options.onSubmit(this.name.trim(), normalizedUrl)
         this.close()
     }
 

@@ -204,7 +204,7 @@ export const en: TranslationKeys = {
     systemPrompt: 'System Prompt',
     systemPromptDesc: 'Instructions for the AI model (role, behavior, formatting)',
     userPromptTemplate: 'User Prompt Template',
-    userPromptDesc: 'Template for user messages. Use <code>{{content}}</code> for the actual content.',
+    userPromptDesc: 'Template for user messages. Use {{content}} for the actual content.',
     systemPromptEmpty: 'System prompt cannot be empty.',
     userPromptEmpty: 'User prompt template cannot be empty.',
     userPromptMissingContent: 'User prompt must include {{content}} variable.',

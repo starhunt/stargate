@@ -5,14 +5,14 @@ import {
     AIProviderDefinition, AIModelDefinition, AISettingsV1, AIProviderType,
 } from './types'
 import {
-    PLUGIN_ID, VIEW_TYPE_BROWSER, DEFAULT_PROFILE_KEY,
+    VIEW_TYPE_BROWSER, DEFAULT_PROFILE_KEY,
     BUILT_IN_PROVIDERS, BUILT_IN_MODELS, DEPRECATED_MODEL_MIGRATIONS,
 } from './constants'
 import { BrowserView } from './views/BrowserView'
 import { StargateSettingTab } from './SettingTab'
 import { AIService } from './services/AIService'
 import { migrateDeprecatedModels } from './services/settingsMigration'
-import { setLocale, setDetectedLocale, SupportedLocale } from './i18n'
+import { setLocale, setDetectedLocale } from './i18n'
 
 // Type export for commands
 export type { BrowserView }
@@ -39,7 +39,7 @@ export default class StargatePlugin extends Plugin {
 
         // 리본 아이콘 추가
         this.addRibbonIcon('globe', 'Open Star Gate Browser', () => {
-            this.activateBrowserView()
+            void this.activateBrowserView()
         })
 
         // 명령어 등록
@@ -73,11 +73,10 @@ export default class StargatePlugin extends Plugin {
      */
     private initI18n(): void {
         // 언어 감지: app locale → moment locale → 'en' 순
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const obsidianLocale = (this.app as any).locale
-            || (window as any).moment?.locale()
-            || 'en'
-        setDetectedLocale(obsidianLocale)
+        // App.locale / window.moment는 공개 타입에 없어 최소 형태로 좁혀서 읽는다
+        const appLocale = (this.app as Partial<{ locale: string }>).locale
+        const momentLocale = (window as Partial<{ moment: { locale(): string } }>).moment?.locale()
+        setDetectedLocale(appLocale || momentLocale || 'en')
 
         // 수동 설정이 있으면 적용
         if (this.settings.language !== 'auto') {
@@ -106,10 +105,10 @@ export default class StargatePlugin extends Plugin {
             await view.openAnalysisModal()
         } else {
             await this.activateBrowserView()
-            setTimeout(async () => {
+            window.setTimeout(() => {
                 const view = this.getBrowserView()
                 if (view) {
-                    await view.openAnalysisModal()
+                    void view.openAnalysisModal()
                 }
             }, 300)
         }
@@ -124,10 +123,10 @@ export default class StargatePlugin extends Plugin {
             await view.quickSave()
         } else {
             await this.activateBrowserView()
-            setTimeout(async () => {
+            window.setTimeout(() => {
                 const view = this.getBrowserView()
                 if (view) {
-                    await view.quickSave()
+                    void view.quickSave()
                 }
             }, 300)
         }
@@ -166,7 +165,7 @@ export default class StargatePlugin extends Plugin {
         }
 
         if (leaf) {
-            workspace.revealLeaf(leaf)
+            await workspace.revealLeaf(leaf)
         }
     }
 
@@ -174,8 +173,9 @@ export default class StargatePlugin extends Plugin {
      * 설정 로드
      */
     async loadSettings(): Promise<void> {
-        const loadedData = await this.loadData()
-        const loadedVersion = (loadedData?.settingsVersion as number) || 0
+        // loadData()는 any를 반환하므로 저장 스키마의 부분 집합으로 좁혀서 다룬다
+        const loadedData = (await this.loadData()) as Partial<PluginSettings> | null
+        const loadedVersion = loadedData?.settingsVersion || 0
 
         if (!loadedData) {
             // 첫 실행: 기본 설정 + 빌트인 프리셋
@@ -270,7 +270,7 @@ export default class StargatePlugin extends Plugin {
         // 기본 프로바이더/모델 매핑
         const v1Provider = v1Ai.provider || 'openai'
         const defaultProviderId = v1Provider
-        const defaultModelId = v1Models[v1Provider as AIProviderType] ||
+        const defaultModelId = v1Models[v1Provider] ||
             BUILT_IN_MODELS.find(m => m.providerId === v1Provider)?.id ||
             'gpt-5.6-luna'
 

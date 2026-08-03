@@ -10,7 +10,7 @@ import { t } from '../i18n'
 export class AddModelModal extends Modal {
     private result: AIModelDefinition
     private providers: AIProviderDefinition[]
-    private onSubmit: (result: AIModelDefinition, originalId?: string) => void
+    private onSubmit: (result: AIModelDefinition, originalId?: string) => void | Promise<void>
     private isEdit: boolean
     private originalId?: string
     private existingModelIds: string[]
@@ -19,7 +19,7 @@ export class AddModelModal extends Modal {
     constructor(
         app: App,
         providers: AIProviderDefinition[],
-        onSubmit: (result: AIModelDefinition, originalId?: string) => void,
+        onSubmit: (result: AIModelDefinition, originalId?: string) => void | Promise<void>,
         existingModelIds: string[],
         editModel?: AIModelDefinition,
         aiService?: AIService,
@@ -102,7 +102,7 @@ export class AddModelModal extends Modal {
                         this.result.apiKey = value || undefined
                     })
                 text.inputEl.type = 'password'
-                text.inputEl.style.width = '220px'
+                text.inputEl.addClass('stargate-input-model-name')
             })
 
         // 테스트 버튼
@@ -139,7 +139,7 @@ export class AddModelModal extends Modal {
                         button.setButtonText(t().common.failure)
                     }
                     button.setDisabled(false)
-                    setTimeout(() => button.setButtonText(t().common.test), 3000)
+                    window.setTimeout(() => { button.setButtonText(t().common.test) }, 3000)
                 })
             })
         }
@@ -172,7 +172,7 @@ export class AddModelModal extends Modal {
             if (!this.result.apiKey) {
                 this.result.apiKey = undefined
             }
-            this.onSubmit(this.result, idChanged ? this.originalId : undefined)
+            void this.onSubmit(this.result, idChanged ? this.originalId : undefined)
             this.close()
         }
 
