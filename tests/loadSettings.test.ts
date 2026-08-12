@@ -146,8 +146,50 @@ describe('loadSettings - 서비스 종료 모델 강제 교체', () => {
         expect(ctx.settings().settingsVersion).toBe(3)
         expect(ctx.settings().defaultModelId).toBe('gpt-5.6-luna')
         expect(ctx.settings().models.map(m => m.id)).toEqual([
-            'gpt-5.6-luna', 'claude-sonnet-5', 'gemini-3.6-flash', 'grok-4.5', 'glm-5.2', 'llama3.2',
+            'gpt-5.6-luna', 'claude-sonnet-5', 'gemini-3.6-flash', 'grok-4.5', 'glm-5.2', 'solar-pro4', 'llama3.2',
         ])
+    })
+
+    test('첫 실행 빌트인에 Upstage 프로바이더가 포함된다', async () => {
+        const ctx = createPlugin(null)
+
+        await ctx.plugin.loadSettings()
+
+        const upstage = ctx.settings().providers.find(p => p.id === 'upstage')
+        expect(upstage).toBeDefined()
+        expect(upstage?.baseUrl).toBe('https://api.upstage.ai/v1')
+        expect(upstage?.apiFormat).toBe('openai')
+        expect(upstage?.authType).toBe('bearer')
+        expect(upstage?.isBuiltIn).toBe(true)
+
+        const solar = ctx.settings().models.find(m => m.id === 'solar-pro4')
+        expect(solar?.providerId).toBe('upstage')
+
+        // 기본 프로바이더/모델은 기존 값을 유지한다
+        expect(ctx.settings().defaultProviderId).toBe('openai')
+        expect(ctx.settings().defaultModelId).toBe('gpt-5.6-luna')
+    })
+
+    test('기존 사용자에게 Upstage 프리셋이 자동 추가되고 선택은 유지된다', async () => {
+        const ctx = createPlugin({
+            settingsVersion: 3,
+            uuid: 'existing-uuid',
+            defaultProviderId: 'anthropic',
+            defaultModelId: 'claude-sonnet-5',
+            providers: [
+                { id: 'anthropic', name: 'Anthropic', baseUrl: 'https://api.anthropic.com/v1', apiKey: 'k', authType: 'x-api-key', apiFormat: 'anthropic', isBuiltIn: true },
+            ],
+            models: [{ id: 'claude-sonnet-5', name: 'Claude Sonnet 5', providerId: 'anthropic', enabled: true }],
+        })
+
+        await ctx.plugin.loadSettings()
+
+        expect(ctx.settings().providers.some(p => p.id === 'upstage')).toBe(true)
+        expect(ctx.settings().models.some(m => m.id === 'solar-pro4')).toBe(true)
+        // 기존 키와 기본 선택은 그대로
+        expect(ctx.settings().providers.find(p => p.id === 'anthropic')?.apiKey).toBe('k')
+        expect(ctx.settings().defaultProviderId).toBe('anthropic')
+        expect(ctx.settings().defaultModelId).toBe('claude-sonnet-5')
     })
 
     test('v1 사용자의 종료된 Gemini 모델도 교체된다', async () => {
