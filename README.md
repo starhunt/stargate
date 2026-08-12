@@ -14,13 +14,26 @@ Clip web pages with a multi-tab browser, AI analysis templates, and content capt
 
 ## Installation
 
-### From Community Plugins
+### Community plugins (recommended)
 
-1. Open Settings → Community plugins.
+Star Gate is listed in Obsidian's official community plugin directory. Try this first.
+
+1. Open Settings → Community plugins → **Browse**.
 2. Search for **Star Gate**.
 3. Install and enable the plugin.
 
+### BRAT (if the listing is unavailable)
+
+The plugin can be temporarily absent from the directory while an update is under review. If the search turns up nothing, install it through BRAT, which also keeps following later releases.
+
+1. Install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
+2. Open BRAT settings → "Add Beta plugin".
+3. Enter `starhunt/stargate`.
+4. Enable **Star Gate** in Community plugins.
+
 ### Manual installation
+
+A last resort when neither option above works — you have to track updates yourself.
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the latest [GitHub release](https://github.com/starhunt/stargate/releases/latest).
 2. Create the plugin folder: `<vault>/.obsidian/plugins/stargate/`.

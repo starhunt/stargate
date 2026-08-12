@@ -132,19 +132,31 @@ YouTube URL 감지 시 자동으로 메타데이터 추출:
 
 ## 설치 방법
 
-### BRAT (권장)
+### 커뮤니티 플러그인 (권장)
+
+Star Gate는 Obsidian 공식 커뮤니티 플러그인으로 등록되어 있습니다. 먼저 이 방법을 확인하세요.
+
+1. Obsidian 설정 → 커뮤니티 플러그인 → **탐색**
+2. **Star Gate** 검색
+3. 설치 → 활성화
+
+### BRAT (목록에서 검색되지 않을 때)
+
+업데이트 심사나 점검으로 커뮤니티 플러그인 목록에서 일시적으로 보이지 않을 수 있습니다. 검색이 안 되면 BRAT으로 설치하면 됩니다. BRAT은 이후 릴리스도 자동으로 따라갑니다.
 
 1. [BRAT](https://github.com/TfTHacker/obsidian42-brat) 플러그인 설치
 2. BRAT 설정 → "Add Beta plugin"
 3. `starhunt/stargate` 입력
-4. Community plugins에서 **Star Gate** 활성화
+4. 커뮤니티 플러그인 목록에서 **Star Gate** 활성화
 
 ### 수동 설치
+
+BRAT도 쓰기 어려운 경우의 최후 수단입니다. 이 방법은 업데이트를 직접 챙겨야 합니다.
 
 1. [Releases](https://github.com/starhunt/stargate/releases)에서 최신 버전 다운로드
 2. `main.js`, `manifest.json`, `styles.css`를 Vault의 `.obsidian/plugins/stargate/` 폴더에 복사
 3. Obsidian 재시작
-4. Community plugins에서 **Star Gate** 활성화
+4. 커뮤니티 플러그인 목록에서 **Star Gate** 활성화
 
 ## 사용 방법
 
