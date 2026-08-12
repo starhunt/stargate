@@ -124,6 +124,7 @@ YouTube URL 감지 시 자동으로 메타데이터 추출:
 | Groq | Llama 3.3 70B 등 (초고속) |
 | xAI (Grok) | Grok-2 |
 | z.ai (GLM) | GLM-4 |
+| Upstage (Solar) | Solar Pro 4 |
 | Ollama | 로컬 LLM |
 
 ## 설치 방법

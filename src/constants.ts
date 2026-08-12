@@ -106,6 +106,15 @@ export const BUILT_IN_PROVIDERS: AIProviderDefinition[] = [
         isBuiltIn: true,
     },
     {
+        id: 'upstage',
+        name: 'Upstage (Solar)',
+        baseUrl: 'https://api.upstage.ai/v1',
+        apiKey: '',
+        authType: 'bearer',
+        apiFormat: 'openai',
+        isBuiltIn: true,
+    },
+    {
         id: 'ollama',
         name: 'Ollama (Local)',
         baseUrl: 'http://localhost:11434',
@@ -122,6 +131,8 @@ export const BUILT_IN_MODELS: AIModelDefinition[] = [
     { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', providerId: 'gemini', enabled: true },
     { id: 'grok-4.5', name: 'Grok 4.5', providerId: 'xai', enabled: true },
     { id: 'glm-5.2', name: 'GLM-5.2', providerId: 'zai', enabled: true },
+    // Upstage 공식 표기는 하이픈 없는 'solar-pro4' (블로그 URL의 solar-pro-4와 다름)
+    { id: 'solar-pro4', name: 'Solar Pro 4', providerId: 'upstage', enabled: true },
     { id: 'llama3.2', name: 'Llama 3.2', providerId: 'ollama', enabled: true },
 ]
 
