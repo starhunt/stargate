@@ -1,6 +1,6 @@
 {
   "name": "stargate",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Clip web pages with a multi-tab browser, AI analysis templates, and content capture.",
   "main": "main.js",
   "scripts": {
