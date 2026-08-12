@@ -116,16 +116,19 @@ YouTube URL 감지 시 자동으로 메타데이터 추출:
 
 ## 지원 AI Provider
 
-| Provider | 설명 |
-|----------|------|
-| OpenAI | GPT-4o 등 |
-| Anthropic | Claude |
-| Google Gemini | Gemini 2.0 Flash 등 |
-| Groq | Llama 3.3 70B 등 (초고속) |
-| xAI (Grok) | Grok-2 |
-| z.ai (GLM) | GLM-4 |
+빌트인 프리셋으로 제공되는 제공자와 기본 모델입니다.
+
+| Provider | 기본 모델 |
+|----------|----------|
+| OpenAI | GPT-5.6 Luna |
+| Anthropic | Claude Sonnet 5 |
+| Google Gemini | Gemini 3.6 Flash |
+| xAI (Grok) | Grok 4.5 |
+| z.ai (GLM) | GLM-5.2 |
 | Upstage (Solar) | Solar Pro 4 |
-| Ollama | 로컬 LLM |
+| Ollama (Local) | Llama 3.2 (로컬 LLM) |
+
+설정에서 모델을 직접 추가하거나, OpenAI 호환 API를 쓰는 커스텀 제공자를 등록할 수도 있습니다.
 
 ## 설치 방법
 
